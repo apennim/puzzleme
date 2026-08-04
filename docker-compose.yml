@@ -1,0 +1,14 @@
+services:
+  workspace:
+    container_name: puzzle-me-workspace
+    build: .
+    image: puzzle-me-env
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    command: sleep infinity
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G

@@ -1,0 +1,19 @@
+# 相依套件與建置產物
+node_modules
+dist
+build
+
+# 環境變數（含 Supabase 金鑰，不進版控）
+.env
+.env.local
+.env.*.local
+
+# 這幾個資料夾是外部函式庫的原始碼參考副本（不是本專案程式碼，也不是 npm 相依套件）
+/h3-master
+/Leaflet-main
+/socket.io-main
+/swiper-master
+/turf-master
+
+# OS / 編輯器
+.DS_Store

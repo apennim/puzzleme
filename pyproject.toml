@@ -1,0 +1,26 @@
+[project]
+name = "puzzle-me"
+version = "0.1.0"
+description = "AI Generated Project"
+authors = [{name = "Researcher"}]
+requires-python = ">=3.10"
+dependencies = [
+    "lancedb>=0.5.0",
+    "langchain>=0.1.0",
+    "langchain-huggingface>=0.0.1",
+    "sentence-transformers>=2.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.3.0"
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"

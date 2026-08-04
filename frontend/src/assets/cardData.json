@@ -1,0 +1,155 @@
+{
+  "cards": [
+    {
+      "id": "card-1",
+      "title": "老台北鐵窗花",
+      "image": "https://picsum.photos/seed/card-1/300/400",
+      "lat": 25.0545,
+      "lng": 121.5090,
+      "description": "保存完整的日式鐵窗花藝，見證老台北的建築美學",
+      "address": "台北市大同區迪化街一段 21 巷 5 號",
+      "tags": ["古蹟", "鐵窗花", "打卡熱點"]
+    },
+    {
+      "id": "card-2",
+      "title": "昭和復古風 - 茶館",
+      "image": "https://picsum.photos/seed/card-2/300/400",
+      "lat": 25.0550,
+      "lng": 121.5100,
+      "description": "古色古香的茶館，迎接懷舊時光",
+      "address": "台北市大同區保安街 49 巷 12 號",
+      "tags": ["茶館", "昭和風", "懷舊"]
+    },
+    {
+      "id": "card-3",
+      "title": "大稻埕碼頭夕陽",
+      "image": "https://picsum.photos/seed/card-3/300/400",
+      "lat": 25.0563,
+      "lng": 121.5076,
+      "description": "淡水河畔的絕美夕陽景致",
+      "address": "台北市大同區民生西路底 大稻埕碼頭",
+      "tags": ["夕陽", "碼頭", "河濱"]
+    },
+    {
+      "id": "card-4",
+      "title": "永樂市場古蹟",
+      "image": "https://picsum.photos/seed/card-4/300/400",
+      "lat": 25.0555,
+      "lng": 121.5110,
+      "description": "承載百年商業文明的熱鬧市集",
+      "address": "台北市大同區迪化街一段 21 號",
+      "tags": ["市場", "古蹟", "在地美食"]
+    },
+    {
+      "id": "card-5-sp",
+      "title": "✨ 幻猻家珈琲 (SP 合作商家)",
+      "image": "https://picsum.photos/seed/card-5-sp/300/400",
+      "lat": 25.0541,
+      "lng": 121.5097,
+      "description": "精選咖啡與古董傢俱的融合空間 - 右滑解鎖特殊彩蛋！",
+      "address": "台北市大同區民生西路 152 巷 8 號",
+      "tags": ["咖啡廳", "SP 商家", "古董傢俱"],
+      "isSP": true
+    },
+    {
+      "id": "card-6",
+      "title": "林家花園 - 古蹟",
+      "image": "https://picsum.photos/seed/card-6/300/400",
+      "lat": 25.0535,
+      "lng": 121.5120,
+      "description": "台灣現存最古老的私人園林建築",
+      "address": "新北市板橋區西門街 9 號",
+      "tags": ["古蹟", "園林", "歷史建築"]
+    },
+    {
+      "id": "card-7",
+      "title": "霞海城隍廟",
+      "image": "https://picsum.photos/seed/card-7/300/400",
+      "lat": 25.0558,
+      "lng": 121.5105,
+      "description": "三百年香火不絕的文化信仰中心",
+      "address": "台北市大同區迪化街一段 61 號",
+      "tags": ["廟宇", "信仰中心", "三百年歷史"]
+    },
+    {
+      "id": "card-8",
+      "title": "新藝街文創基地",
+      "image": "https://picsum.photos/seed/card-8/300/400",
+      "lat": 25.0548,
+      "lng": 121.5085,
+      "description": "年輕創作者的夢想聚集地",
+      "address": "台北市大同區延平北路二段 36 巷 3 號",
+      "tags": ["文創", "藝術", "展覽空間"]
+    },
+    {
+      "id": "card-9",
+      "title": "民樂街紀念館",
+      "image": "https://picsum.photos/seed/card-9/300/400",
+      "lat": 25.0570,
+      "lng": 121.5095,
+      "description": "見證大稻埕茶業繁榮的歷史檔案",
+      "address": "台北市大同區民樂街 28 號",
+      "tags": ["紀念館", "茶業歷史", "文物"]
+    },
+    {
+      "id": "card-10",
+      "title": "陽光巷弄街景",
+      "image": "https://picsum.photos/seed/card-10/300/400",
+      "lat": 25.0540,
+      "lng": 121.5125,
+      "description": "光影交錯的復古小巷，攝影愛好者的天堂",
+      "address": "台北市大同區歸綏街 139 巷",
+      "tags": ["巷弄", "攝影", "街拍"]
+    },
+    {
+      "id": "card-11",
+      "title": "老店懷舊咖啡",
+      "image": "https://picsum.photos/seed/card-11/300/400",
+      "lat": 25.0552,
+      "lng": 121.5088,
+      "description": "四十年老店，每一杯都是故事",
+      "address": "台北市大同區延平北路二段 68 號",
+      "tags": ["咖啡廳", "老字號", "懷舊"]
+    },
+    {
+      "id": "card-12",
+      "title": "迪化街年貨大街",
+      "image": "https://picsum.photos/seed/card-12/300/400",
+      "lat": 25.0560,
+      "lng": 121.5115,
+      "description": "承載傳統農曆年俗的購物指南",
+      "address": "台北市大同區迪化街一段",
+      "tags": ["年貨大街", "購物", "年俗"]
+    },
+    {
+      "id": "card-13",
+      "title": "美術館前空地",
+      "image": "https://picsum.photos/seed/card-13/300/400",
+      "lat": 25.0535,
+      "lng": 121.5105,
+      "description": "當代藝術與古蹟對話的場景",
+      "address": "台北市大同區承德路三段 152 號",
+      "tags": ["當代藝術", "展演空間", "古蹟對話"]
+    },
+    {
+      "id": "card-14",
+      "title": "河邊步道散步",
+      "image": "https://picsum.photos/seed/card-14/300/400",
+      "lat": 25.0565,
+      "lng": 121.5080,
+      "description": "淡水河畔的綠色呼吸道",
+      "address": "台北市大同區環河北路三段 淡水河畔",
+      "tags": ["步道", "河濱", "散步"]
+    },
+    {
+      "id": "card-15",
+      "title": "夜市小吃廣場",
+      "image": "https://picsum.photos/seed/card-15/300/400",
+      "lat": 25.0545,
+      "lng": 121.5110,
+      "description": "在地美食匯聚的迷你夜市",
+      "address": "台北市大同區寧夏路 夜市商圈",
+      "tags": ["夜市", "小吃", "在地美食"]
+    }
+  ]
+}

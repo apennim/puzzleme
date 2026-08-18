@@ -161,6 +161,7 @@ export class RouteGenerator {
       {
         id: 'route-a-default',
         name: '方案 A - 初探大稻埕',
+        description: '輕鬆走訪大稻埕的入門景點',
         pins: [
           {
             id: 'pin-default-1',
@@ -179,6 +180,7 @@ export class RouteGenerator {
       {
         id: 'route-b-default',
         name: '方案 B - 深度體驗',
+        description: '安排更多停留時間，深入感受在地氛圍',
         pins: [
           {
             id: 'pin-default-3',
@@ -197,6 +199,7 @@ export class RouteGenerator {
       {
         id: 'route-c-default',
         name: '方案 C - 輕鬆漫步',
+        description: '悠閒步調，沿途欣賞河濱與街景',
         pins: [
           {
             id: 'pin-default-5',

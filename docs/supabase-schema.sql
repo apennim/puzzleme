@@ -18,11 +18,13 @@ create table if not exists trip_posts (
 
 alter table trip_posts enable row level security;
 
+drop policy if exists "trip_posts public insert" on trip_posts;
 create policy "trip_posts public insert"
   on trip_posts for insert
   to anon
   with check (true);
 
+drop policy if exists "trip_posts public read" on trip_posts;
 create policy "trip_posts public read"
   on trip_posts for select
   to anon
@@ -38,6 +40,7 @@ create table if not exists profile_leads (
 
 alter table profile_leads enable row level security;
 
+drop policy if exists "profile_leads public insert" on profile_leads;
 create policy "profile_leads public insert"
   on profile_leads for insert
   to anon
@@ -52,11 +55,13 @@ create policy "profile_leads public insert"
 -- 再回到 SQL Editor 執行下面兩個 policy
 -- ============================================================
 
+drop policy if exists "trip-media public insert" on storage.objects;
 create policy "trip-media public insert"
   on storage.objects for insert
   to anon
   with check (bucket_id = 'trip-media');
 
+drop policy if exists "trip-media public read" on storage.objects;
 create policy "trip-media public read"
   on storage.objects for select
   to anon

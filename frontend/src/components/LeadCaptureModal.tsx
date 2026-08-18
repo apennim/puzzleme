@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
 
 const SUBMITTED_KEY = 'pintu-lead-submitted';
 const SKIPPED_KEY = 'pintu-lead-skipped';
@@ -38,13 +37,14 @@ function LeadCaptureModal({ onClose }: LeadCaptureModalProps) {
 
     setSubmitting(true);
     try {
-      const { error } = await supabase.from('profile_leads').insert({
-        nickname: nickname.trim(),
-        contact: contact.trim(),
+      const res = await fetch('/api/submit-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nickname: nickname.trim(), contact: contact.trim() }),
       });
 
-      if (error) {
-        console.error('留資失敗', error);
+      if (!res.ok) {
+        console.error('留資失敗', await res.text());
         alert('送出失敗，請檢查網路連線後再試一次。');
         return;
       }

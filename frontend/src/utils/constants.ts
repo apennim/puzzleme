@@ -37,9 +37,3 @@ export const MAP_DEFAULT_ZOOM = 15;
 
 /** 地圖中心座標（大稻埕） */
 export const MAP_CENTER: [number, number] = [25.0552, 121.5130];
-
-/** 投票通過所需票數百分比 */
-export const VOTE_PASS_THRESHOLD = 0.5; // 50%
-
-/** Socket.IO 伺服器 URL */
-export const SOCKET_SERVER_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';

@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import * as turf from '@turf/turf';
 import MapCanvas from './components/MapCanvas';
 import SwipeDeck from './components/SwipeDeck';
-import VoteRoom from './components/VoteRoom';
 import Notification from './components/Notification';
 import Timeline from './components/Timeline';
 import HomeFeed from './components/HomeFeed';
@@ -15,7 +14,7 @@ import LeadCaptureModal, { hasSeenLeadCapture } from './components/LeadCaptureMo
 import { usePosts } from './hooks/usePosts';
 import ProfilePage from './components/ProfilePage';
 
-const secondaryTabs = ['Map', 'Vote'] as const;
+const secondaryTabs = ['Map'] as const;
 type Tab = NavTab | typeof secondaryTabs[number];
 
 function App() {
@@ -102,27 +101,6 @@ function App() {
               } else {
                 setNotice(`${pin.title} 已加入行程（距離起點 ${Math.round(distToStart*1000)}m，距離終點 ${Math.round(distToEnd*1000)}m）`);
               }
-            }}
-          />
-        )}
-        {activeTab === 'Vote' && (
-          <VoteRoom
-            onAddBlindPins={(pins) => {
-              setMatchedPins((prev) => [...prev, ...pins]);
-            }}
-            onUnlock={(pins) => {
-              setMatchedPins((prev) => {
-                const map = new Map(prev.map((p) => [p.id, p]));
-                pins.forEach((pin) => {
-                  if (map.has(pin.id)) {
-                    map.set(pin.id, { ...map.get(pin.id), ...pin });
-                  } else {
-                    map.set(pin.id, { ...pin });
-                  }
-                });
-                return Array.from(map.values());
-              });
-              setNotice('房間投票已通過：路線已解鎖！');
             }}
           />
         )}

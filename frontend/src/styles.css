@@ -23,7 +23,7 @@ body {
   max-width: 1080px;
   margin: 0 auto;
   padding: 16px;
-  padding-bottom: 100px;
+  padding-bottom: 150px;
 }
 
 .app-header {
@@ -90,7 +90,8 @@ body {
 
 .map-canvas {
   width: 100%;
-  height: 480px;
+  height: min(480px, 50vh);
+  height: min(480px, 50dvh);
   border-radius: 12px;
 }
 
@@ -115,7 +116,8 @@ body {
 .deck-frame {
   width: 100%;
   max-width: 520px;
-  height: 560px;
+  height: min(560px, 58vh);
+  height: min(560px, 58dvh);
   position: relative;
   perspective: 1000px;
 }
@@ -1025,7 +1027,8 @@ body {
 
 .trip-invite-media {
   position: relative;
-  height: 420px;
+  height: min(420px, 34vh);
+  height: min(420px, 34dvh);
 }
 
 .trip-invite-back {

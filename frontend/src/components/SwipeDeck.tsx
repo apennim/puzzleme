@@ -15,7 +15,7 @@ export interface SwipeCardData {
 }
 
 interface SwipeDeckProps {
-  onMatch: (pin: { id: string; lat: number; lng: number; title: string }) => void;
+  onMatch: (card: SwipeCardData) => void;
 }
 
 function SwipeDeck({ onMatch }: SwipeDeckProps) {
@@ -45,12 +45,7 @@ function SwipeDeck({ onMatch }: SwipeDeckProps) {
     if (!topCard) return;
 
     if (direction === 'right') {
-      onMatch({
-        id: topCard.id,
-        lat: topCard.lat,
-        lng: topCard.lng,
-        title: topCard.title,
-      });
+      onMatch(topCard);
 
       // SP 卡片特殊提示
       if (topCard.isSP) {

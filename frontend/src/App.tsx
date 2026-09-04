@@ -12,7 +12,10 @@ import SettingsPanel from './components/SettingsPanel';
 import NewPostModal from './components/NewPostModal';
 import LeadCaptureModal, { hasSeenLeadCapture } from './components/LeadCaptureModal';
 import { usePosts } from './hooks/usePosts';
+import { useFavorites } from './hooks/useFavorites';
 import ProfilePage from './components/ProfilePage';
+import FavoritesBox from './components/FavoritesBox';
+import FavoriteDetail from './components/FavoriteDetail';
 
 const secondaryTabs = ['Map'] as const;
 type Tab = NavTab | typeof secondaryTabs[number];
@@ -25,7 +28,9 @@ function App() {
   const [showNewPost, setShowNewPost] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showLeadCapture, setShowLeadCapture] = useState(false);
+  const [favoriteDetailId, setFavoriteDetailId] = useState<string | null>(null);
   const { posts, addPost } = usePosts();
+  const { favorites, addFavorite } = useFavorites();
 
   useEffect(() => {
     if (!hasSeenLeadCapture()) {
@@ -55,28 +60,56 @@ function App() {
 
       <main className="app-main">
         {showProfile && <ProfilePage />}
-        {!showProfile && activeTab === 'Home' && <HomeFeed posts={posts} />}
+        {!showProfile && activeTab === 'Favorites' && favoriteDetailId && (() => {
+          const index = favorites.findIndex((f) => f.id === favoriteDetailId);
+          const favorite = favorites[index];
+          if (!favorite) return null;
+          return (
+            <FavoriteDetail
+              favorite={favorite}
+              previous={favorites[index + 1]}
+              onClose={() => setFavoriteDetailId(null)}
+              onOpenDetail={(id) => setFavoriteDetailId(id)}
+            />
+          );
+        })()}
+        {!showProfile && activeTab === 'Favorites' && !favoriteDetailId && (
+          <FavoritesBox
+            favorites={favorites}
+            onClose={() => setActiveTab('Home')}
+            onOpenDetail={(id) => setFavoriteDetailId(id)}
+          />
+        )}
+        {!showProfile && activeTab === 'Home' && (
+          <HomeFeed posts={posts} onOpenFavorites={() => setActiveTab('Favorites')} />
+        )}
         {activeTab === 'Friend' && <FriendTrip />}
         {activeTab === 'Match' && (
           <SwipeDeck
-            onMatch={(pin) => {
+            onMatch={(card) => {
               // turf expects [lng, lat]
-              const pt = turf.point([pin.lng, pin.lat]);
+              const pt = turf.point([card.lng, card.lat]);
               const spPt = turf.point([SP.lng, SP.lat]);
-              const startPt = turf.point([START.lng, START.lat]);
-              const endPt = turf.point([END.lng, END.lat]);
 
               const distToSP = turf.distance(pt, spPt, { units: 'kilometers' });
-              const distToStart = turf.distance(pt, startPt, { units: 'kilometers' });
-              const distToEnd = turf.distance(pt, endPt, { units: 'kilometers' });
 
-              setMatchedPins((prev) => [...prev, pin]);
+              setMatchedPins((prev) => [...prev, { id: card.id, lat: card.lat, lng: card.lng, title: card.title }]);
+              addFavorite({
+                id: card.id,
+                title: card.title,
+                image: card.image,
+                description: card.description,
+                address: card.address,
+                tags: card.tags,
+                lat: card.lat,
+                lng: card.lng,
+              });
 
               // Business trigger: within 0.3 km of SP
               if (distToSP <= 0.3) {
-                setNotice(`偵測到鄰近 SP 據點：${SP.name}，加入行程可解鎖稀有碎片！`);
+                setNotice(`⭐ 已收入收藏盒！偵測到鄰近 SP 據點：${SP.name}，加入行程可解鎖稀有碎片！`);
               } else {
-                setNotice(`${pin.title} 已加入行程（距離起點 ${Math.round(distToStart*1000)}m，距離終點 ${Math.round(distToEnd*1000)}m）`);
+                setNotice(`⭐ 已收入收藏盒：${card.title}`);
               }
             }}
           />
@@ -117,8 +150,15 @@ function App() {
       <Timeline pins={matchedPins} visible={showTimeline} onClose={() => setShowTimeline(false)} />
 
       <BottomNav
-        active={(['Home', 'Match', 'Friend'] as const).includes(activeTab as NavTab) ? (activeTab as NavTab) : 'Match'}
-        onChange={(tab) => setActiveTab(tab)}
+        active={
+          (['Home', 'Match', 'Friend', 'Favorites'] as const).includes(activeTab as NavTab)
+            ? (activeTab as NavTab)
+            : 'Match'
+        }
+        onChange={(tab) => {
+          setActiveTab(tab);
+          setFavoriteDetailId(null);
+        }}
       />
     </div>
   );

@@ -91,9 +91,10 @@ function FeedPost({ post }: { post: FeedPostMeta }) {
 interface HomeFeedProps {
   posts: UserPost[];
   userAvatarKey?: string;
+  onOpenFavorites?: () => void;
 }
 
-function HomeFeed({ posts: dynamicPosts, userAvatarKey = 'home-my-avatar' }: HomeFeedProps) {
+function HomeFeed({ posts: dynamicPosts, userAvatarKey = 'home-my-avatar', onOpenFavorites }: HomeFeedProps) {
   const [myAvatar, setMyAvatar] = useLocalImage(userAvatarKey);
 
   return (
@@ -101,7 +102,7 @@ function HomeFeed({ posts: dynamicPosts, userAvatarKey = 'home-my-avatar' }: Hom
       <div className="home-feed-header">
         <EditableImage value={myAvatar} onChange={setMyAvatar} alt="我的頭像" className="home-feed-avatar" compact />
         <p className="home-feed-prompt">Where you wanna go today?</p>
-        <button className="home-feed-search" aria-label="搜尋景點">🔖</button>
+        <button className="home-feed-search" aria-label="收藏盒" onClick={onOpenFavorites}>🔖</button>
       </div>
 
       <div className="home-feed-list">

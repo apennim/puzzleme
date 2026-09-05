@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLocalImage } from '../hooks/useLocalImage';
+import { useDeviceId } from '../hooks/useDeviceId';
 import type { UserPost } from '../hooks/usePosts';
 import { supabase, TRIP_MEDIA_BUCKET } from '../lib/supabaseClient';
 import EditableImage from './EditableImage';
@@ -13,7 +14,7 @@ interface NewPostModalProps {
 
 function NewPostModal({ onClose, onSubmit }: NewPostModalProps) {
   const [myAvatar, setMyAvatar] = useLocalImage('home-my-avatar');
-  const [myName, setMyName] = useLocalImage('my-name');
+  const { label: myName } = useDeviceId();
 
   const [caption, setCaption] = useState('');
   const [location, setLocation] = useState('');
@@ -67,7 +68,7 @@ function NewPostModal({ onClose, onSubmit }: NewPostModalProps) {
         taggedFriends,
         media: mediaUrl,
         mediaType,
-        authorName: myName.trim() || '我',
+        authorName: myName.trim() || '匿名旅人',
         authorAvatar: myAvatar,
         createdAt: Date.now(),
       });
@@ -98,13 +99,7 @@ function NewPostModal({ onClose, onSubmit }: NewPostModalProps) {
                 className="feed-post-avatar"
                 compact
               />
-              <input
-                className="new-post-input"
-                type="text"
-                placeholder="你的名字"
-                value={myName}
-                onChange={(e) => setMyName(e.target.value)}
-              />
+              <span className="new-post-author-name">{myName || '匿名旅人'}</span>
             </div>
           </div>
 

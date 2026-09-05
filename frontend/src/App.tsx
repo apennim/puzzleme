@@ -17,6 +17,7 @@ import ProfilePage from './components/ProfilePage';
 import FavoritesBox from './components/FavoritesBox';
 import FavoriteDetail from './components/FavoriteDetail';
 import Login from './components/Login';
+import PostDetail from './components/PostDetail';
 
 const secondaryTabs = ['Map'] as const;
 type Tab = NavTab | typeof secondaryTabs[number];
@@ -29,6 +30,7 @@ function App() {
   const [showNewPost, setShowNewPost] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [favoriteDetailId, setFavoriteDetailId] = useState<string | null>(null);
+  const [postDetailId, setPostDetailId] = useState<string | null>(null);
   const { posts, addPost } = usePosts();
   const { favorites, addFavorite } = useFavorites();
   const { hasIdentity, setLabel } = useDeviceId();
@@ -79,8 +81,17 @@ function App() {
             onOpenDetail={(id) => setFavoriteDetailId(id)}
           />
         )}
-        {!showProfile && activeTab === 'Home' && (
-          <HomeFeed posts={posts} onOpenFavorites={() => setActiveTab('Favorites')} />
+        {!showProfile && activeTab === 'Home' && postDetailId && (() => {
+          const post = posts.find((p) => p.id === postDetailId);
+          if (!post) return null;
+          return <PostDetail post={post} onClose={() => setPostDetailId(null)} />;
+        })()}
+        {!showProfile && activeTab === 'Home' && !postDetailId && (
+          <HomeFeed
+            posts={posts}
+            onOpenFavorites={() => setActiveTab('Favorites')}
+            onOpenPost={(id) => setPostDetailId(id)}
+          />
         )}
         {activeTab === 'Friend' && <FriendTrip />}
         {activeTab === 'Match' && (
@@ -156,6 +167,7 @@ function App() {
         onChange={(tab) => {
           setActiveTab(tab);
           setFavoriteDetailId(null);
+          setPostDetailId(null);
         }}
       />
     </div>

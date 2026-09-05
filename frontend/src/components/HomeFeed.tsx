@@ -2,9 +2,16 @@ import { useLocalImage } from '../hooks/useLocalImage';
 import type { UserPost } from '../hooks/usePosts';
 import EditableImage from './EditableImage';
 
-function DynamicFeedPost({ post }: { post: UserPost }) {
+const CAPTION_PREVIEW_LIMIT = 15;
+
+function truncateCaption(text: string) {
+  if (text.length <= CAPTION_PREVIEW_LIMIT) return text;
+  return `${text.slice(0, CAPTION_PREVIEW_LIMIT)}…`;
+}
+
+function DynamicFeedPost({ post, onOpen }: { post: UserPost; onOpen: () => void }) {
   return (
-    <article className="feed-post">
+    <article className="feed-post" onClick={onOpen} role="button" tabIndex={0}>
       <div className="feed-post-user">
         {post.authorAvatar ? (
           <img className="feed-post-avatar" src={post.authorAvatar} alt={post.authorName} />
@@ -23,14 +30,14 @@ function DynamicFeedPost({ post }: { post: UserPost }) {
           {post.mediaType === 'video' && <video src={post.media} controls className="feed-post-video" />}
           {post.caption && (
             <div className="feed-post-caption">
-              <span className="feed-post-caption-text">{post.caption}</span>
+              <span className="feed-post-caption-text">{truncateCaption(post.caption)}</span>
             </div>
           )}
         </div>
       ) : (
         post.caption && (
           <div className="feed-post-caption feed-post-caption-standalone">
-            <span className="feed-post-caption-text">{post.caption}</span>
+            <span className="feed-post-caption-text">{truncateCaption(post.caption)}</span>
           </div>
         )
       )}
@@ -46,9 +53,10 @@ interface HomeFeedProps {
   posts: UserPost[];
   userAvatarKey?: string;
   onOpenFavorites?: () => void;
+  onOpenPost?: (id: string) => void;
 }
 
-function HomeFeed({ posts: dynamicPosts, userAvatarKey = 'home-my-avatar', onOpenFavorites }: HomeFeedProps) {
+function HomeFeed({ posts: dynamicPosts, userAvatarKey = 'home-my-avatar', onOpenFavorites, onOpenPost }: HomeFeedProps) {
   const [myAvatar, setMyAvatar] = useLocalImage(userAvatarKey);
 
   return (
@@ -64,7 +72,7 @@ function HomeFeed({ posts: dynamicPosts, userAvatarKey = 'home-my-avatar', onOpe
           <p className="home-feed-empty">尚無行程貼文，點擊右下角「＋ 新增行程貼文」發布第一篇吧！</p>
         )}
         {dynamicPosts.map((post) => (
-          <DynamicFeedPost key={post.id} post={post} />
+          <DynamicFeedPost key={post.id} post={post} onOpen={() => onOpenPost?.(post.id)} />
         ))}
       </div>
     </section>

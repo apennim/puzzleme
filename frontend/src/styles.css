@@ -1189,11 +1189,13 @@ body {
   padding: 8px 18px 20px;
 }
 
-.favorites-empty {
+.favorites-empty,
+.home-feed-empty,
+.friend-trip-empty {
   color: #8a7a74;
   font-size: 0.9rem;
   text-align: center;
-  padding: 24px 0;
+  padding: 24px 18px;
 }
 
 .favorite-list-item {

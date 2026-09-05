@@ -1,17 +1,6 @@
 import { useLocalImage } from '../hooks/useLocalImage';
 import type { UserPost } from '../hooks/usePosts';
 import EditableImage from './EditableImage';
-import EditableText from './EditableText';
-
-export interface FeedPostMeta {
-  id: string;
-  username: string;
-}
-
-const posts: FeedPostMeta[] = [
-  { id: 'post-1', username: 'J0anna' },
-  { id: 'post-2', username: 'Muoooo1' },
-];
 
 function DynamicFeedPost({ post }: { post: UserPost }) {
   return (
@@ -53,41 +42,6 @@ function DynamicFeedPost({ post }: { post: UserPost }) {
   );
 }
 
-function FeedPost({ post }: { post: FeedPostMeta }) {
-  const [avatar, setAvatar] = useLocalImage(`home-avatar-${post.id}`);
-  const [image, setImage] = useLocalImage(`home-photo-${post.id}`);
-  const [caption, setCaption] = useLocalImage(`home-caption-${post.id}`);
-
-  return (
-    <article className="feed-post">
-      <div className="feed-post-user">
-        <EditableImage
-          value={avatar}
-          onChange={setAvatar}
-          alt={`${post.username} 頭像`}
-          className="feed-post-avatar"
-          compact
-        />
-        <strong>{post.username}</strong>
-      </div>
-      <EditableImage value={image} onChange={setImage} alt="貼文照片" className="feed-post-media">
-        <div
-          className="feed-post-caption"
-          onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          <EditableText
-            value={caption}
-            onChange={setCaption}
-            placeholder="輸入介紹文案"
-            className="feed-post-caption-text"
-          />
-        </div>
-      </EditableImage>
-    </article>
-  );
-}
-
 interface HomeFeedProps {
   posts: UserPost[];
   userAvatarKey?: string;
@@ -106,11 +60,11 @@ function HomeFeed({ posts: dynamicPosts, userAvatarKey = 'home-my-avatar', onOpe
       </div>
 
       <div className="home-feed-list">
+        {dynamicPosts.length === 0 && (
+          <p className="home-feed-empty">尚無行程貼文，點擊右下角「＋ 新增行程貼文」發布第一篇吧！</p>
+        )}
         {dynamicPosts.map((post) => (
           <DynamicFeedPost key={post.id} post={post} />
-        ))}
-        {posts.map((post) => (
-          <FeedPost key={post.id} post={post} />
         ))}
       </div>
     </section>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 // @ts-ignore
 import * as turf from '@turf/turf';
 import MapCanvas from './components/MapCanvas';
@@ -10,12 +10,13 @@ import FriendTrip from './components/FriendTrip';
 import BottomNav, { type NavTab } from './components/BottomNav';
 import SettingsPanel from './components/SettingsPanel';
 import NewPostModal from './components/NewPostModal';
-import LeadCaptureModal, { hasSeenLeadCapture } from './components/LeadCaptureModal';
 import { usePosts } from './hooks/usePosts';
 import { useFavorites } from './hooks/useFavorites';
+import { useDeviceId } from './hooks/useDeviceId';
 import ProfilePage from './components/ProfilePage';
 import FavoritesBox from './components/FavoritesBox';
 import FavoriteDetail from './components/FavoriteDetail';
+import Login from './components/Login';
 
 const secondaryTabs = ['Map'] as const;
 type Tab = NavTab | typeof secondaryTabs[number];
@@ -27,20 +28,18 @@ function App() {
   const [showTimeline, setShowTimeline] = useState(false);
   const [showNewPost, setShowNewPost] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const [showLeadCapture, setShowLeadCapture] = useState(false);
   const [favoriteDetailId, setFavoriteDetailId] = useState<string | null>(null);
   const { posts, addPost } = usePosts();
   const { favorites, addFavorite } = useFavorites();
-
-  useEffect(() => {
-    if (!hasSeenLeadCapture()) {
-      setShowLeadCapture(true);
-    }
-  }, []);
+  const { hasIdentity, setLabel } = useDeviceId();
 
   const SP = { lat: 25.0541, lng: 121.5097, name: '幻猻家珈琲' };
   const START = { lat: 25.0552, lng: 121.5201, name: '北風社' };
   const END = { lat: 25.0563, lng: 121.5076, name: '大稻埕碼頭' };
+
+  if (!hasIdentity) {
+    return <Login onContinue={(nickname) => setLabel(nickname)} />;
+  }
 
   return (
     <div className="app-shell">
@@ -145,7 +144,6 @@ function App() {
       </div>
 
       {showNewPost && <NewPostModal onClose={() => setShowNewPost(false)} onSubmit={addPost} />}
-      {showLeadCapture && <LeadCaptureModal onClose={() => setShowLeadCapture(false)} />}
       {notice && <Notification message={notice} onClose={() => setNotice(null)} />}
       <Timeline pins={matchedPins} visible={showTimeline} onClose={() => setShowTimeline(false)} />
 

@@ -1,5 +1,5 @@
-import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { motion, useAnimationControls } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
 import cardDataRaw from '../assets/cardData.json';
 
 export interface SwipeCardData {
@@ -9,6 +9,7 @@ export interface SwipeCardData {
   lat: number;
   lng: number;
   image: string;
+  photoCredit?: string;
   address?: string;
   tags?: string[];
   isSP?: boolean;
@@ -20,9 +21,17 @@ interface SwipeDeckProps {
 
 function SwipeDeck({ onMatch }: SwipeDeckProps) {
   const [deck, setDeck] = useState<SwipeCardData[]>([]);
-  const [history, setHistory] = useState<{ card: SwipeCardData; action: 'left' | 'right' }[]>([]);
   const [lastAction, setLastAction] = useState<string>('');
-  const [matchCount, setMatchCount] = useState(0);
+
+  // 主卡片是「同一個」DOM 節點，靠 controls 播放離場動畫後直接換內容，
+  // 不做掛載／卸載，因此不會有離場節點殘留在 DOM 裡。
+  const controls = useAnimationControls();
+  const busyRef = useRef(false);
+  const [busy, setBusy] = useState(false);
+  const swipeTimer = useRef<number | undefined>(undefined);
+
+  // 卸載時清掉尚未觸發的換卡計時器
+  useEffect(() => () => window.clearTimeout(swipeTimer.current), []);
 
   // 初始化卡片資料
   useEffect(() => {
@@ -30,7 +39,7 @@ function SwipeDeck({ onMatch }: SwipeDeckProps) {
       ...card,
       isSP: card.isSP || false,
     }));
-    
+
     // 隨機打亂卡片順序
     const shuffled = [...allCards].sort(() => Math.random() - 0.5);
     setDeck(shuffled);
@@ -41,41 +50,44 @@ function SwipeDeck({ onMatch }: SwipeDeckProps) {
   const nextCard = deck[1];
   const totalCards = deck.length;
 
-  const handleSwipe = (direction: 'left' | 'right') => {
-    if (!topCard) return;
-
+  // 真正把卡片處理掉（不含動畫）
+  const commitSwipe = (card: SwipeCardData, direction: 'left' | 'right') => {
     if (direction === 'right') {
-      onMatch(topCard);
-
-      // SP 卡片特殊提示
-      if (topCard.isSP) {
-        setLastAction(`✨ 稀有 SP！${topCard.title} 已加入行程！`);
-      } else {
-        setLastAction(`✅ Match: ${topCard.title}`);
-      }
-      setMatchCount((prev) => prev + 1);
+      onMatch(card);
+      setLastAction(card.isSP ? `✨ 稀有 SP！${card.title} 已加入行程！` : `✅ Match: ${card.title}`);
     } else {
-      setLastAction(`❌ Discard: ${topCard.title}`);
+      setLastAction(`❌ Discard: ${card.title}`);
     }
-
-    setHistory((prev) => [...prev, { card: topCard, action: direction }]);
-
-    // 移除已處理的卡片
     setDeck((prev) => prev.slice(1));
   };
 
-  // 復原上一個滑卡動作
-  const handleBack = () => {
-    setHistory((prev) => {
-      if (prev.length === 0) return prev;
-      const last = prev[prev.length - 1];
-      setDeck((d) => [last.card, ...d]);
-      if (last.action === 'right') {
-        setMatchCount((c) => Math.max(0, c - 1));
-      }
-      setLastAction(`↩️ 已復原：${last.card.title}`);
-      return prev.slice(0, -1);
+  // 播放離場動畫，並在固定時間後換卡 + 復位。
+  // 不 await 動畫 Promise：即使動畫驅動被瀏覽器背景節流，換卡邏輯仍會如期完成。
+  const SWIPE_MS = 270;
+  const flyOut = (direction: 'left' | 'right') => {
+    if (busyRef.current) return;
+    const card = deck[0];
+    if (!card) return;
+
+    busyRef.current = true;
+    setBusy(true);
+
+    const dir = direction === 'right' ? 1 : -1;
+    void controls.start({
+      x: dir * 460,
+      rotate: dir * 18,
+      opacity: 0,
+      transition: { duration: SWIPE_MS / 1000, ease: 'easeOut' },
     });
+
+    swipeTimer.current = window.setTimeout(() => {
+      commitSwipe(card, direction);
+      // 先停掉可能還在跑的離場動畫，再強制歸位，避免動畫殘值把卡片留在畫面外
+      controls.stop();
+      controls.set({ x: 0, rotate: 0, opacity: 1 });
+      busyRef.current = false;
+      setBusy(false);
+    }, SWIPE_MS);
   };
 
   return (
@@ -85,123 +97,100 @@ function SwipeDeck({ onMatch }: SwipeDeckProps) {
           {lastAction && <span>{lastAction}</span>}
         </div>
         <div className="deck-frame">
-          <AnimatePresence mode="popLayout">
-            {/* 後景卡片（隱約可見） */}
-            {nextCard && (
-              <motion.div
-                key={`next-${nextCard.id}`}
-                className={`swipe-card ${nextCard.isSP ? 'special-card' : ''}`}
-                initial={{ scale: 0.95, y: 12, opacity: 0.6 }}
-                animate={{ scale: 0.95, y: 12, opacity: 0.6 }}
-                transition={{ duration: 0.2 }}
-              >
-                <div className="card-image" style={{ backgroundImage: `url(${nextCard.image})` }} />
-                <div className="card-content">
-                  <strong>{nextCard.title}</strong>
-                  <p>{nextCard.description}</p>
-                </div>
-              </motion.div>
-            )}
+          {/* 後景卡片（隱約可見）：靜態掛載，內容隨牌堆更新 */}
+          {nextCard && (
+            <div
+              className={`swipe-card swipe-card-bg ${nextCard.isSP ? 'special-card' : ''}`}
+              aria-hidden="true"
+            >
+              <div className="card-image" style={{ backgroundImage: `url(${nextCard.image})` }} />
+              <div className="card-content">
+                <strong>{nextCard.title}</strong>
+                <p>{nextCard.description}</p>
+              </div>
+            </div>
+          )}
 
-            {/* 主卡片 */}
-            {topCard && (
-              <motion.div
-                key={topCard.id}
-                className={`swipe-card ${topCard.isSP ? 'special-card' : ''}`}
-                drag="x"
-                dragConstraints={{ left: -500, right: 500 }}
-                dragElastic={0.2}
-                dragTransition={{ power: 0.2, timeConstant: 150 }}
-                onDragEnd={(_, info) => {
-                  const threshold = 120;
-                  const velocity = info.velocity.x;
+          {/* 全部滑完的提示 */}
+          {totalCards === 0 && (
+            <div className="swipe-card swipe-card-empty">
+              <div style={{ padding: '40px 20px', textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #8f5c69 0%, #c29c8f 100%)' }}>
+                <p style={{ fontSize: '2rem', margin: '0 0 12px 0' }}>🎉</p>
+                <h3 style={{ color: '#fff', margin: '0 0 8px 0' }}>已 Match 所有景點！</h3>
+                <p style={{ color: 'rgba(255,255,255,0.8)', margin: 0 }}>前往 Map 頁籤查看完整路線</p>
+              </div>
+            </div>
+          )}
 
-                  if (info.offset.x > threshold || velocity > 500) {
-                    handleSwipe('right');
-                  } else if (info.offset.x < -threshold || velocity < -500) {
-                    handleSwipe('left');
-                  }
-                }}
-                initial={{ opacity: 1, y: 0, rotate: 0 }}
-                animate={{ opacity: 1, y: 0, rotate: 0 }}
-                exit={{ opacity: 0, x: 500, rotate: 20 }}
-                whileDrag={{
-                  boxShadow: '0 30px 60px rgba(0, 0, 0, 0.16)',
-                }}
-              >
-                <div className="swipe-card-media">
+          {/* 主卡片：單一持久節點，不隨換卡掛載／卸載 */}
+          {topCard && (
+            <motion.div
+              className={`swipe-card ${topCard.isSP ? 'special-card' : ''}`}
+              drag="x"
+              dragSnapToOrigin
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.6}
+              onDragEnd={(_, info) => {
+                const threshold = 120;
+                const velocity = info.velocity.x;
+                if (info.offset.x > threshold || velocity > 500) {
+                  void flyOut('right');
+                } else if (info.offset.x < -threshold || velocity < -500) {
+                  void flyOut('left');
+                }
+              }}
+              initial={{ x: 0, rotate: 0, opacity: 1 }}
+              animate={controls}
+              whileDrag={{ boxShadow: '0 30px 60px rgba(0, 0, 0, 0.16)' }}
+            >
+              <div className="swipe-card-media">
+                <div className="card-image" style={{ backgroundImage: `url(${topCard.image})` }} />
+                <div className="swipe-card-gradient" />
+                {topCard.photoCredit && (
+                  <span className="photo-credit">{topCard.photoCredit}</span>
+                )}
+              </div>
+              <div className="swipe-card-info">
+                <h3 className="card-title">{topCard.title}</h3>
+                {topCard.address && <p className="card-address">{topCard.address}</p>}
+                {topCard.tags && topCard.tags.length > 0 && (
+                  <div className="tag-row">
+                    {topCard.tags.map((tag, i) => (
+                      <span key={tag} className={`tag-pill tag-pill-${i % 3}`}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="card-actions swipe-actions">
                   <button
                     type="button"
-                    className="back-btn"
+                    className="btn-like"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleBack();
+                      void flyOut('right');
                     }}
-                    disabled={history.length === 0}
-                    aria-label="復原上一張"
+                    disabled={busy}
+                    aria-label="喜歡"
                   >
-                    ‹
+                    ♥
                   </button>
-                  <div className="card-image" style={{ backgroundImage: `url(${topCard.image})` }} />
-                  <div className="swipe-card-gradient" />
+                  <button
+                    type="button"
+                    className="btn-dislike"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void flyOut('left');
+                    }}
+                    disabled={busy}
+                    aria-label="不喜歡"
+                  >
+                    ✕
+                  </button>
                 </div>
-                <div className="swipe-card-info">
-                  <h3 className="card-title">{topCard.title}</h3>
-                  {topCard.address && <p className="card-address">{topCard.address}</p>}
-                  {topCard.tags && topCard.tags.length > 0 && (
-                    <div className="tag-row">
-                      {topCard.tags.map((tag, i) => (
-                        <span key={tag} className={`tag-pill tag-pill-${i % 3}`}>
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <div className="card-actions swipe-actions">
-                    <button
-                      type="button"
-                      className="btn-like"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSwipe('right');
-                      }}
-                      aria-label="喜歡"
-                    >
-                      ♥
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-dislike"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSwipe('left');
-                      }}
-                      aria-label="不喜歡"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* 完成提示 */}
-            {!topCard && totalCards === 0 && (
-              <motion.div
-                key="empty"
-                className="swipe-card"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <div style={{ padding: '40px 20px', textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #8f5c69 0%, #c29c8f 100%)' }}>
-                  <p style={{ fontSize: '2rem', margin: '0 0 12px 0' }}>🎉</p>
-                  <h3 style={{ color: '#fff', margin: '0 0 8px 0' }}>已 Match 所有景點！</h3>
-                  <p style={{ color: 'rgba(255,255,255,0.8)', margin: 0 }}>前往 Map 頁籤查看完整路線</p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
     </section>

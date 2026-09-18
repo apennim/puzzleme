@@ -1,6 +1,7 @@
 import { motion, useAnimationControls } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import cardDataRaw from '../assets/cardData.json';
+import { useCardPhoto } from '../hooks/useCardPhoto';
 
 export interface SwipeCardData {
   id: string;
@@ -49,6 +50,11 @@ function SwipeDeck({ onMatch }: SwipeDeckProps) {
   const topCard = deck[0];
   const nextCard = deck[1];
   const totalCards = deck.length;
+
+  // 有設定 VITE_GOOGLE_STREETVIEW_KEY 時，會非同步換成該座標的真實 Google 街景；
+  // 沒設定或該點沒有街景涵蓋，就維持 cardData.json 裡策展好的照片。
+  const topPhoto = useCardPhoto(topCard);
+  const bgPhoto = useCardPhoto(nextCard);
 
   // 真正把卡片處理掉（不含動畫）
   const commitSwipe = (card: SwipeCardData, direction: 'left' | 'right') => {
@@ -103,7 +109,7 @@ function SwipeDeck({ onMatch }: SwipeDeckProps) {
               className={`swipe-card swipe-card-bg ${nextCard.isSP ? 'special-card' : ''}`}
               aria-hidden="true"
             >
-              <div className="card-image" style={{ backgroundImage: `url(${nextCard.image})` }} />
+              <div className="card-image" style={{ backgroundImage: `url(${bgPhoto.src})` }} />
               <div className="card-content">
                 <strong>{nextCard.title}</strong>
                 <p>{nextCard.description}</p>
@@ -144,10 +150,10 @@ function SwipeDeck({ onMatch }: SwipeDeckProps) {
               whileDrag={{ boxShadow: '0 30px 60px rgba(0, 0, 0, 0.16)' }}
             >
               <div className="swipe-card-media">
-                <div className="card-image" style={{ backgroundImage: `url(${topCard.image})` }} />
+                <div className="card-image" style={{ backgroundImage: `url(${topPhoto.src})` }} />
                 <div className="swipe-card-gradient" />
-                {topCard.photoCredit && (
-                  <span className="photo-credit">{topCard.photoCredit}</span>
+                {topPhoto.credit && (
+                  <span className="photo-credit">{topPhoto.credit}</span>
                 )}
               </div>
               <div className="swipe-card-info">

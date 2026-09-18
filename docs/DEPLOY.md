@@ -59,6 +59,24 @@ npm --prefix frontend run dev
 
 打開瀏覽器測試：進站應跳出留資表單、發一篇行程貼文（含照片）、重新整理後貼文仍在（代表資料真的存進 Supabase，不是只存在瀏覽器）。
 
+## 5. Street View 街景照片（選用，可跳過）
+
+滑卡目前用的是 `cardData.json` 裡策展好的 Wikimedia Commons 真實照片，不接這個也完全正常。想再進一步換成「該座標真正的 Google 街景」才需要做這步——這一步全部要在你自己的 Google 帳號操作（含綁信用卡），Claude 沒辦法替你建立帳號或輸入卡號。
+
+1. 到 https://console.cloud.google.com/ 用你的 Google 帳號登入，右上角建立一個新專案（或選現有的）。
+2. 左側選單 **Billing**，綁一張信用卡啟用帳單（沒綁卡 API 打不通；Demo 用量落在每月免費額度內，正常不會被扣款，但**建議順手在 Billing → Budgets & alerts 設一個小額預算警報**，例如 5 美元，超過會寄信通知你）。
+3. 左側選單 **APIs & Services → Library**，搜尋 **Street View Static API**，點進去按 **Enable**。
+4. 左側選單 **APIs & Services → Credentials** → **Create Credentials → API key**，會產生一組金鑰。
+5. 產生後點進去該金鑰設定：
+   - **Application restrictions** 選 **HTTP referrers**，加入：
+     - `https://puzzleme-swart.vercel.app/*`（正式站）
+     - `https://*.vercel.app/*`（Vercel 預覽部署）
+     - `http://localhost:5173/*`（本機開發）
+   - **API restrictions** 選 **Restrict key**，只勾 **Street View Static API**（避免這把金鑰被拿去打別的付費 API）
+6. 複製這把金鑰 → **回填** `VITE_GOOGLE_STREETVIEW_KEY`（本機 `frontend/.env.local` 和 Vercel 的 Environment Variables 都要加，跟 `VITE_SUPABASE_ANON_KEY` 一樣是可以放前端的 key，因為已經用 referrer 限制過了）。
+
+接上以後行為：程式會先查該座標有沒有街景涵蓋（`metadata` 端點完全免費、不計費），有的話换成真實街景並在卡片標「© Google 街景」，沒有涵蓋就維持原本策展的照片，不會出現破圖。程式碼在 [`frontend/src/lib/streetView.ts`](../frontend/src/lib/streetView.ts)、[`frontend/src/hooks/useCardPhoto.ts`](../frontend/src/hooks/useCardPhoto.ts)。
+
 ## 已知限制
 
 - `trip_posts` 的新增權限對所有人開放（demo 階段的合理取捨），任何拿到 anon key 的人理論上都能塞資料進去。`profile_leads` 因為改走伺服器端 API，前端不再直接握有寫入權限，相對安全一些，但 `/api/submit-lead` 本身仍是公開端點，沒有做防灌水驗證。若之後要防灌水，可以加簡單的 rate limit 或驗證碼。

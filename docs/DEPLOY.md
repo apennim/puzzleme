@@ -90,6 +90,16 @@ npm --prefix frontend run dev
 
 程式碼在 [`frontend/src/hooks/useProfile.ts`](../frontend/src/hooks/useProfile.ts)（取代原本的 `useDeviceId`）。
 
+## 7. 好友關係（加好友、接受邀請）
+
+在第 6 步的帳號基礎上，新增了「好友代碼加好友」的完整功能：**好友**分頁現在會顯示自己的 6 碼代碼，輸入朋友的代碼即可送出邀請，對方在同一個分頁接受後就會出現在雙方的好友列表。用代碼而不是搜尋暱稱，是因為暱稱可能重複、也不想讓任何登入者能翻看所有人的暱稱清單。
+
+只需要**再重新執行一次** [docs/supabase-schema.sql](supabase-schema.sql)（新增了 `profiles.friend_code` 欄位和 `friendships` 表，一樣是重複執行也不會壞掉既有資料的寫法）。不用再動 Dashboard 的任何開關。
+
+程式碼在 [`frontend/src/hooks/useFriends.ts`](../frontend/src/hooks/useFriends.ts)、[`frontend/src/components/FriendTrip.tsx`](../frontend/src/components/FriendTrip.tsx)。
+
+**目前的範圍**：好友列表本身還沒接回行程貼文動態（「好友」分頁不會顯示好友發的貼文），純粹是加好友／管理好友關係。要接上「看得到好友動態」是下一步。
+
 ## 已知限制
 
 - `trip_posts` 的新增權限對所有人開放（demo 階段的合理取捨），任何拿到 anon key 的人理論上都能塞資料進去。`profile_leads` 因為改走伺服器端 API，前端不再直接握有寫入權限，相對安全一些，但 `/api/submit-lead` 本身仍是公開端點，沒有做防灌水驗證。若之後要防灌水，可以加簡單的 rate limit 或驗證碼。

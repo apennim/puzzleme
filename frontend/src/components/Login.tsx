@@ -2,7 +2,7 @@ import { useState } from 'react';
 import SettingsIcon from './SettingsIcon';
 
 interface LoginProps {
-  onContinue: (nickname: string) => void;
+  onContinue: (nickname: string) => Promise<void>;
 }
 
 function GoogleIcon() {
@@ -54,7 +54,10 @@ function Login({ onContinue }: LoginProps) {
         return;
       }
 
-      onContinue(nickname.trim());
+      await onContinue(nickname.trim());
+    } catch (err) {
+      console.error('建立帳號失敗', err);
+      alert('登入失敗，請檢查網路連線後再試一次。');
     } finally {
       setSubmitting(false);
     }

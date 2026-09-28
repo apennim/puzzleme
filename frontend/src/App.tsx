@@ -12,7 +12,7 @@ import SettingsPanel from './components/SettingsPanel';
 import NewPostModal from './components/NewPostModal';
 import { usePosts } from './hooks/usePosts';
 import { useFavorites } from './hooks/useFavorites';
-import { useDeviceId } from './hooks/useDeviceId';
+import { useProfile } from './hooks/useProfile';
 import ProfilePage from './components/ProfilePage';
 import FavoritesBox from './components/FavoritesBox';
 import FavoriteDetail from './components/FavoriteDetail';
@@ -33,14 +33,19 @@ function App() {
   const [postDetailId, setPostDetailId] = useState<string | null>(null);
   const { posts, addPost } = usePosts();
   const { favorites, addFavorite } = useFavorites();
-  const { hasIdentity, setLabel } = useDeviceId();
+  const { hasIdentity, loading: profileLoading, setNickname } = useProfile();
 
   const SP = { lat: 25.0541, lng: 121.5097, name: '幻猻家珈琲' };
   const START = { lat: 25.0552, lng: 121.5201, name: '北風社' };
   const END = { lat: 25.0563, lng: 121.5076, name: '大稻埕碼頭' };
 
+  // 還在確認有沒有既有登入狀態（讀取 Supabase session）時先不渲染畫面，避免閃一下登入畫面
+  if (profileLoading) {
+    return null;
+  }
+
   if (!hasIdentity) {
-    return <Login onContinue={(nickname) => setLabel(nickname)} />;
+    return <Login onContinue={setNickname} />;
   }
 
   return (

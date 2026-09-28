@@ -50,6 +50,45 @@ create policy "profile_leads public insert"
 
 
 -- ============================================================
+-- 使用者個人資料（對應 Supabase Auth 的使用者，含匿名登入 signInAnonymously）
+-- 前置作業：Dashboard → Authentication → Sign In / Providers → Anonymous，
+-- 打開「Enable Anonymous Sign-ins」，這步只能在網頁上點，SQL 做不到。
+-- ============================================================
+
+create table if not exists profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  nickname text not null,
+  avatar_url text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table profiles enable row level security;
+
+-- 所有登入者（含匿名登入）都能讀，之後「搜尋暱稱加好友」要用
+drop policy if exists "profiles read for authenticated" on profiles;
+create policy "profiles read for authenticated"
+  on profiles for select
+  to authenticated
+  using (true);
+
+-- 只能新增自己的那一筆
+drop policy if exists "profiles insert own" on profiles;
+create policy "profiles insert own"
+  on profiles for insert
+  to authenticated
+  with check (auth.uid() = id);
+
+-- 只能改自己的那一筆
+drop policy if exists "profiles update own" on profiles;
+create policy "profiles update own"
+  on profiles for update
+  to authenticated
+  using (auth.uid() = id)
+  with check (auth.uid() = id);
+
+
+-- ============================================================
 -- Storage：trip-media bucket 的存取權限
 -- 先到 Dashboard → Storage → New bucket，建立一個名為 "trip-media" 的 Public bucket，
 -- 再回到 SQL Editor 執行下面兩個 policy

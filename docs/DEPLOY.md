@@ -77,6 +77,19 @@ npm --prefix frontend run dev
 
 接上以後行為：程式會先查該座標有沒有街景涵蓋（`metadata` 端點完全免費、不計費），有的話换成真實街景並在卡片標「© Google 街景」，沒有涵蓋就維持原本策展的照片，不會出現破圖。程式碼在 [`frontend/src/lib/streetView.ts`](../frontend/src/lib/streetView.ts)、[`frontend/src/hooks/useCardPhoto.ts`](../frontend/src/hooks/useCardPhoto.ts)。
 
+## 6. 好友系統的地基：Supabase Auth 匿名登入（必做，好友功能的前提）
+
+原本的登入只是把暱稱存在瀏覽器 `localStorage`，換裝置就是另一個人、任何人都能打一樣的暱稱冒充，沒辦法在這之上蓋好友、聊天這種需要「穩定指認出同一個人」的功能。現在改成呼叫 Supabase Auth 的**匿名登入**（`signInAnonymously`）：畫面上使用者體感完全不變（一樣只要打暱稱），但背後會拿到一個真正的帳號 `auth.uid()`，之後加好友、貼文按讚都能直接用它做權限判斷。
+
+這一步只有一個地方要你去 Supabase Dashboard 點開關，其餘我都寫好了：
+
+1. 到你的 Supabase 專案 → 左側選單 **Authentication → Sign In / Providers**，找到 **Anonymous**，打開 **Enable Anonymous Sign-ins**。
+2. 左側選單 **SQL Editor**，重新貼上整份 [docs/supabase-schema.sql](supabase-schema.sql) 執行一次（新增了 `profiles` 表，其餘表用 `create table if not exists` / `drop policy if exists` 包過，重複執行不會出錯）。
+
+做完這兩步，正式站重新整理後：新使用者打暱稱送出即可（背後自動建立匿名帳號），**先前只用舊版裝置 ID 登入過的使用者，這次會需要重新輸入一次暱稱**（帳號機制整個換掉了，這是一次性的，之後就會持續記住）。
+
+程式碼在 [`frontend/src/hooks/useProfile.ts`](../frontend/src/hooks/useProfile.ts)（取代原本的 `useDeviceId`）。
+
 ## 已知限制
 
 - `trip_posts` 的新增權限對所有人開放（demo 階段的合理取捨），任何拿到 anon key 的人理論上都能塞資料進去。`profile_leads` 因為改走伺服器端 API，前端不再直接握有寫入權限，相對安全一些，但 `/api/submit-lead` 本身仍是公開端點，沒有做防灌水驗證。若之後要防灌水，可以加簡單的 rate limit 或驗證碼。

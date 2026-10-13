@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useLocalImage } from '../hooks/useLocalImage';
 import { useProfile } from '../hooks/useProfile';
 import type { UserPost } from '../hooks/usePosts';
 import { supabase, TRIP_MEDIA_BUCKET } from '../lib/supabaseClient';
@@ -13,8 +12,7 @@ interface NewPostModalProps {
 }
 
 function NewPostModal({ onClose, onSubmit }: NewPostModalProps) {
-  const [myAvatar, setMyAvatar] = useLocalImage('home-my-avatar');
-  const { nickname: myName } = useProfile();
+  const { nickname: myName, avatarUrl: myAvatar, setAvatar: setMyAvatar } = useProfile();
 
   const [caption, setCaption] = useState('');
   const [location, setLocation] = useState('');

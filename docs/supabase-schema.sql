@@ -94,6 +94,11 @@ create policy "profiles update own"
 alter table profiles add column if not exists friend_code text;
 create unique index if not exists profiles_friend_code_key on profiles (friend_code);
 
+-- 個人資料頁（頭像、狀態、3 張貼文）改存雲端，跟著帳號走：重新登入、換裝置都還在
+-- 圖片本身傳到 trip-media bucket 的 profiles/<uid>/ 底下，這裡只存網址
+alter table profiles add column if not exists status text;
+alter table profiles add column if not exists profile_posts jsonb not null default '[]'::jsonb;
+
 
 -- ============================================================
 -- 好友關係

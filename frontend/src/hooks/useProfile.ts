@@ -1,27 +1,76 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { useSyncExternalStore } from 'react';
+import { supabase, TRIP_MEDIA_BUCKET } from '../lib/supabaseClient';
 
 /**
- * 使用者身分：底層是 Supabase Auth 的「匿名登入」（signInAnonymously），
- * 取代原本 useDeviceId 的假裝置 ID。使用者體感完全不變（一樣只要打暱稱），
- * 但背後拿到的是真正的 auth.uid()，之後加好友、留言等功能都能直接用
- * RLS 的 auth.uid() 判斷權限，不用再繞去伺服器端函式。
+ * 使用者身分＋個人資料，底層是 Supabase Auth 的「帳號密碼登入」。
  *
- * 沿用同一支瀏覽器時，Supabase 的 session 會存在 localStorage，重新整理
- * 也不用重新輸入暱稱；換裝置／清瀏覽器資料則跟以前一樣要重新輸入一次。
+ * 登入畫面輸入的「Gmail/電話 + 密碼」就是帳號：先打 /api/account（伺服器端用
+ * secret key 建立帳號，已存在就略過），再用 signInWithPassword 登入。同一組帳密
+ * 不管換瀏覽器、清資料、換裝置，都會回到同一個 auth.uid()，個人資料也就跟著回來。
  *
- * 同時會生成一組「好友代碼」（friend_code），給 useFriends 用來加好友——
- * 暱稱可能重複，代碼不會。
+ * 個人資料頁的頭像、名字、狀態、3 張貼文都存在 profiles 表（圖片傳到 Storage），
+ * 不再存瀏覽器 localStorage。
+ *
+ * 這裡用「模組層級的 store + useSyncExternalStore」，讓 App、個人資料頁、首頁、
+ * 發文視窗共用同一份資料：在個人資料頁換頭像，其他畫面會同步更新。
+ *
+ * 舊版用匿名登入（signInAnonymously）建立的帳號仍然可以繼續用，只是登出後就找不回來。
  */
-export interface Profile {
+export interface ProfilePost {
+  image: string;
+  caption: string;
+  badge: string;
+}
+
+export interface LoginInput {
+  nickname: string;
+  contact: string;
+  password: string;
+}
+
+interface ProfileState {
   userId: string | null;
   nickname: string;
   friendCode: string | null;
-  hasIdentity: boolean;
+  avatarUrl: string;
+  status: string;
+  profilePosts: ProfilePost[];
   /** 剛載入、還在確認有沒有既有 session 時為 true，避免閃一下登入畫面 */
   loading: boolean;
-  /** 登入畫面送出暱稱時呼叫：沒有帳號就先匿名建立一個，再把暱稱存進 profiles */
-  setNickname: (nickname: string) => Promise<void>;
+}
+
+export interface Profile extends ProfileState {
+  hasIdentity: boolean;
+  /** 登入畫面送出時呼叫：帳號不存在就建立，存在就用密碼登入 */
+  signIn: (input: LoginInput) => Promise<void>;
+  signOut: () => Promise<void>;
+  updateProfile: (patch: Partial<Pick<ProfileState, 'nickname' | 'status'>>) => Promise<void>;
+  /** 傳入 EditableImage 給的 data URL，上傳到 Storage 後存成頭像 */
+  setAvatar: (dataUrl: string) => Promise<void>;
+  setProfilePost: (index: number, patch: Partial<ProfilePost>) => Promise<void>;
+}
+
+const EMPTY_STATE: ProfileState = {
+  userId: null,
+  nickname: '',
+  friendCode: null,
+  avatarUrl: '',
+  status: '',
+  profilePosts: [],
+  loading: true,
+};
+
+let state: ProfileState = EMPTY_STATE;
+const listeners = new Set<() => void>();
+
+function setState(patch: Partial<ProfileState>) {
+  state = { ...state, ...patch };
+  listeners.forEach((l) => l());
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
 }
 
 // 排除容易看錯/打錯的字元（0/O、1/I/L），方便當面唸出來或手動輸入
@@ -51,81 +100,186 @@ async function ensureFriendCode(userId: string): Promise<string | null> {
   return null;
 }
 
-export function useProfile(): Profile {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [nickname, setNicknameState] = useState('');
-  const [friendCode, setFriendCode] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+interface ProfileRow {
+  nickname: string | null;
+  friend_code: string | null;
+  avatar_url: string | null;
+  status: string | null;
+  profile_posts: ProfilePost[] | null;
+}
 
-  useEffect(() => {
-    let cancelled = false;
+/** 讀取 profiles 那一筆；沒有資料（新帳號）就用 fallbackNickname 建一筆 */
+async function loadProfile(userId: string, fallbackNickname?: string) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('nickname, friend_code, avatar_url, status, profile_posts')
+    .eq('id', userId)
+    .maybeSingle();
+  if (error) throw error;
 
-    (async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('讀取登入狀態失敗', error);
-      }
-      const user = data?.session?.user;
-      if (user && !cancelled) {
-        setUserId(user.id);
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('nickname, friend_code')
-          .eq('id', user.id)
-          .maybeSingle();
-        if (profileError) {
-          console.error('讀取個人資料失敗', profileError);
-        } else if (profile && !cancelled) {
-          if (profile.nickname) setNicknameState(profile.nickname);
-          if (profile.friend_code) {
-            setFriendCode(profile.friend_code);
-          } else {
-            // 舊帳號在加好友代碼欄位之前就建立過，這裡補生成一組
-            const code = await ensureFriendCode(user.id);
-            if (!cancelled && code) setFriendCode(code);
-          }
-        }
-      }
-      if (!cancelled) setLoading(false);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const setNickname = async (value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) return;
-
-    let uid = userId;
-    if (!uid) {
-      const { data, error } = await supabase.auth.signInAnonymously();
-      if (error || !data.user) {
-        throw error ?? new Error('匿名登入失敗');
-      }
-      uid = data.user.id;
-      setUserId(uid);
-    }
-
-    const { data: saved, error: upsertError } = await supabase
+  let row = data as ProfileRow | null;
+  if (!row && fallbackNickname) {
+    const { data: created, error: insertError } = await supabase
       .from('profiles')
-      .upsert({ id: uid, nickname: trimmed }, { onConflict: 'id' })
-      .select('friend_code')
+      .insert({ id: userId, nickname: fallbackNickname })
+      .select('nickname, friend_code, avatar_url, status, profile_posts')
       .single();
-    if (upsertError) {
-      throw upsertError;
-    }
-    setNicknameState(trimmed);
+    if (insertError) throw insertError;
+    row = created as ProfileRow;
+  }
 
-    // 只有還沒有代碼（第一次建立帳號）才生成，避免之後改暱稱時不小心洗掉舊代碼
-    if (saved?.friend_code) {
-      setFriendCode(saved.friend_code);
-    } else {
-      const code = await ensureFriendCode(uid);
-      if (code) setFriendCode(code);
+  setState({
+    userId,
+    nickname: row?.nickname ?? '',
+    friendCode: row?.friend_code ?? null,
+    avatarUrl: row?.avatar_url ?? '',
+    status: row?.status ?? '',
+    profilePosts: row?.profile_posts ?? [],
+  });
+
+  // 舊帳號在加好友代碼欄位之前就建立過、或剛建立的新帳號，這裡補生成一組
+  if (row && !row.friend_code) {
+    const code = await ensureFriendCode(userId);
+    if (code) setState({ friendCode: code });
+  }
+}
+
+let initStarted = false;
+
+/** 只在第一次有元件使用時執行：沿用瀏覽器裡既有的 session，不用重新登入 */
+function init() {
+  if (initStarted) return;
+  initStarted = true;
+  (async () => {
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) console.error('讀取登入狀態失敗', error);
+      const user = data?.session?.user;
+      if (user) await loadProfile(user.id);
+    } catch (err) {
+      console.error('讀取個人資料失敗', err);
+    } finally {
+      setState({ loading: false });
     }
+  })();
+}
+
+async function signIn({ nickname, contact, password }: LoginInput) {
+  const res = await fetch('/api/account', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nickname, contact, password }),
+  });
+  const body = (await res.json().catch(() => ({}))) as { email?: string; error?: string };
+  if (!res.ok || !body.email) {
+    throw new Error(body.error ?? '登入失敗，請檢查網路連線後再試一次。');
+  }
+
+  const { data, error } = await supabase.auth.signInWithPassword({ email: body.email, password });
+  if (error || !data.user) {
+    if (error?.code === 'invalid_credentials') {
+      throw new Error('密碼錯誤：這個 Gmail／電話已經註冊過，請輸入當初設定的密碼。');
+    }
+    throw error ?? new Error('登入失敗');
+  }
+
+  // 既有帳號沿用雲端上的暱稱與個人資料，暱稱欄位只在第一次建立帳號時使用
+  await loadProfile(data.user.id, nickname);
+}
+
+async function signOut() {
+  const { error } = await supabase.auth.signOut();
+  if (error) console.error('登出失敗', error);
+  setState({ ...EMPTY_STATE, loading: false });
+}
+
+async function saveColumns(columns: Record<string, unknown>) {
+  if (!state.userId) return;
+  const { error } = await supabase
+    .from('profiles')
+    .update({ ...columns, updated_at: new Date().toISOString() })
+    .eq('id', state.userId);
+  if (error) {
+    console.error('儲存個人資料失敗', error);
+    alert('個人資料儲存失敗，請檢查網路連線後再試一次。');
+  }
+}
+
+async function updateProfile(patch: Partial<Pick<ProfileState, 'nickname' | 'status'>>) {
+  const columns: Record<string, unknown> = {};
+  if (patch.nickname !== undefined) {
+    const trimmed = patch.nickname.trim();
+    // 暱稱是必填欄位（發文、加好友都會顯示），清空時維持原本的
+    if (!trimmed || trimmed === state.nickname) return;
+    columns.nickname = trimmed;
+    setState({ nickname: trimmed });
+  }
+  if (patch.status !== undefined) {
+    columns.status = patch.status.trim();
+    setState({ status: patch.status.trim() });
+  }
+  await saveColumns(columns);
+}
+
+/** data URL → 上傳到 trip-media bucket 的 profiles/<uid>/ 底下，回傳公開網址 */
+async function uploadImage(dataUrl: string, name: string): Promise<string | null> {
+  if (!state.userId) return null;
+  const blob = await (await fetch(dataUrl)).blob();
+  const ext = blob.type.split('/')[1] || 'jpg';
+  const path = `profiles/${state.userId}/${name}-${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from(TRIP_MEDIA_BUCKET).upload(path, blob, { contentType: blob.type });
+  if (error) {
+    console.error('照片上傳失敗', error);
+    alert('照片上傳失敗，請檢查網路連線後再試一次。');
+    return null;
+  }
+  return supabase.storage.from(TRIP_MEDIA_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+async function setAvatar(dataUrl: string) {
+  const previous = state.avatarUrl;
+  setState({ avatarUrl: dataUrl }); // 先顯示預覽，上傳完再換成雲端網址
+  const url = await uploadImage(dataUrl, 'avatar');
+  if (!url) {
+    setState({ avatarUrl: previous });
+    return;
+  }
+  setState({ avatarUrl: url });
+  await saveColumns({ avatar_url: url });
+}
+
+function withPost(posts: ProfilePost[], index: number, patch: Partial<ProfilePost>): ProfilePost[] {
+  const next = [...posts];
+  while (next.length <= index) next.push({ image: '', caption: '', badge: '' });
+  next[index] = { ...next[index], ...patch };
+  return next;
+}
+
+async function setProfilePost(index: number, patch: Partial<ProfilePost>) {
+  const previous = state.profilePosts;
+  setState({ profilePosts: withPost(previous, index, patch) });
+
+  if (patch.image?.startsWith('data:')) {
+    const url = await uploadImage(patch.image, `post-${index}`);
+    if (!url) {
+      setState({ profilePosts: previous });
+      return;
+    }
+    setState({ profilePosts: withPost(state.profilePosts, index, { image: url }) });
+  }
+  await saveColumns({ profile_posts: state.profilePosts });
+}
+
+export function useProfile(): Profile {
+  init();
+  const snapshot = useSyncExternalStore(subscribe, () => state);
+  return {
+    ...snapshot,
+    hasIdentity: !!snapshot.nickname,
+    signIn,
+    signOut,
+    updateProfile,
+    setAvatar,
+    setProfilePost,
   };
-
-  return { userId, nickname, friendCode, hasIdentity: !!nickname, loading, setNickname };
 }

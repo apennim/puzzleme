@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import SettingsIcon from './SettingsIcon';
+import { useProfile } from '../hooks/useProfile';
 
 function clearUploadedImages() {
   const keys = Object.keys(localStorage).filter((k) => k.startsWith('pintu-image:'));
@@ -9,6 +10,7 @@ function clearUploadedImages() {
 
 function SettingsPanel() {
   const [open, setOpen] = useState(false);
+  const { signOut } = useProfile();
 
   return (
     <div className="settings-wrap">
@@ -35,6 +37,18 @@ function SettingsPanel() {
             }}
           >
             清除已上傳的照片與文案
+          </button>
+          <button
+            type="button"
+            className="settings-panel-item"
+            onClick={() => {
+              if (confirm('確定要登出嗎？個人資料會保留在雲端，用同一組帳號密碼登入即可找回。')) {
+                setOpen(false);
+                signOut();
+              }
+            }}
+          >
+            登出
           </button>
         </div>
       )}

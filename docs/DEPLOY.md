@@ -7,7 +7,7 @@
 
 > 原本規劃的 Socket.IO 後端（配對/投票即時功能）已經整個移除——投票房功能已下架，`server/` 資料夾不存在了，DEMO 只需要前端 + Supabase 兩個服務。
 >
-> **留資表單的寫入路徑跟行程貼文不一樣**：行程貼文（`trip_posts`）由瀏覽器直接用 anon key 寫入 Supabase，靠 RLS policy 限制權限；留資表單（`profile_leads`）改成先送到 [`frontend/api/submit-lead.ts`](../frontend/api/submit-lead.ts) 這個 Vercel 伺服器端函式，由它用 secret key 寫入（繞過 RLS）。這是因為除錯 `profile_leads` 的 RLS policy 時遇到 Supabase Studio 介面跟資料庫狀態卡住不同步的問題，改用伺服器端寫入更穩定，也更安全（secret key 完全不會出現在瀏覽器端）。
+> **留資表單的寫入路徑跟行程貼文不一樣**：行程貼文（`trip_posts`）由瀏覽器直接用 anon key 寫入 Supabase，靠 RLS policy 限制權限；留資表單（`profile_leads`）改成先送到 [`frontend/api/account.ts`](../frontend/api/account.ts) 這個 Vercel 伺服器端函式（第 8 步之後，它同時負責建立登入帳號），由它用 secret key 寫入（繞過 RLS）。這是因為除錯 `profile_leads` 的 RLS policy 時遇到 Supabase Studio 介面跟資料庫狀態卡住不同步的問題，改用伺服器端寫入更穩定，也更安全（secret key 完全不會出現在瀏覽器端）。
 
 以下每一步都需要你自己動手（帳號註冊、按鈕點擊），因為 Claude 不能替你建立帳號。凡是需要你回填給我的值，我都會用「**→ 回填**」標出來，貼給我之後我幫你接上程式碼設定。
 
@@ -29,7 +29,7 @@
 3. Environment Variables 加三個（用上面回填的值，記得 **Environment 要勾 Production**）：
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
-   - `SUPABASE_SECRET_KEY`（留資表單 `/api/submit-lead` 這個伺服器端函式專用，前端程式碼完全不會碰到它）
+   - `SUPABASE_SECRET_KEY`（`/api/account` 這個伺服器端函式專用：建立登入帳號＋留資表單，前端程式碼完全不會碰到它）
 4. Deploy。完成後會拿到一個網址，例如 `https://pintu-demo.vercel.app`，這就是你可以直接分享給試用者的 DEMO 連結。
 
 ## 3. Git / GitHub
@@ -100,6 +100,23 @@ npm --prefix frontend run dev
 
 **目前的範圍**：好友列表本身還沒接回行程貼文動態（「好友」分頁不會顯示好友發的貼文），純粹是加好友／管理好友關係。要接上「看得到好友動態」是下一步。
 
+## 8. 帳號密碼登入＋個人資料上雲（重新登入後資料還在）
+
+第 6 步的匿名帳號只要換瀏覽器、清資料、開無痕視窗就會變成另一個新帳號，個人資料頁的內容也只存在該瀏覽器的 `localStorage`，所以「重新登入」後資料都不見。現在改成：
+
+- **登入畫面的「Gmail/Phone number + Password」就是帳號**。第一次登入會建立帳號（並留資一次），之後用同一組帳密登入（不管哪台裝置）都會回到同一個 `auth.uid()`；密碼打錯會提示。暱稱欄位只在第一次建立帳號時使用，之後以雲端上的暱稱為準。
+- 帳號由 [`frontend/api/account.ts`](../frontend/api/account.ts)（取代原本的 `submit-lead.ts`）用 secret key 建立，設定 `email_confirm: true`，**不會寄驗證信**，所以 Supabase 的「Confirm email」開關不用動。電話號碼會換算成固定的內部 email（`phone-09xxxxxxxx@phone.puzzleme.local`），`0912-345-678`、`+886912345678` 都算同一支。
+- **個人資料頁（頭像、名字、狀態、3 張貼文）改存 `profiles` 表**，圖片上傳到既有的 `trip-media` bucket 底下 `profiles/<uid>/`。首頁與發文視窗的「我的頭像」也統一用同一個頭像。
+- 右上角 ⚙ 設定新增 **登出**，方便測試「登出 → 再登入 → 資料還在」。
+
+你要做的只有一件事：**再重新執行一次** [docs/supabase-schema.sql](supabase-schema.sql)（新增 `profiles.status`、`profiles.profile_posts` 兩個欄位，重複執行不會壞掉既有資料）。Vercel 環境變數沿用第 2 步的 `SUPABASE_SECRET_KEY`，不用新增。
+
+**注意**：
+- 先前用匿名帳號登入的試用者，在同一個瀏覽器仍可繼續使用，但匿名帳號沒有帳密，**登出後就找不回來**；請他們登出後用帳密重新登入一次（會是新帳號）。舊版存在 `localStorage` 的個人資料頁內容不會自動搬到雲端。
+- `/api/account` 是 Vercel 伺服器端函式，`npm run dev`（純 Vite）不會跑它，本機要測登入請用 `vercel dev`，或直接在 Vercel 預覽部署上測。
+
+程式碼在 [`frontend/src/hooks/useProfile.ts`](../frontend/src/hooks/useProfile.ts)、[`frontend/src/components/ProfilePage.tsx`](../frontend/src/components/ProfilePage.tsx)。
+
 ## 已知限制
 
-- `trip_posts` 的新增權限對所有人開放（demo 階段的合理取捨），任何拿到 anon key 的人理論上都能塞資料進去。`profile_leads` 因為改走伺服器端 API，前端不再直接握有寫入權限，相對安全一些，但 `/api/submit-lead` 本身仍是公開端點，沒有做防灌水驗證。若之後要防灌水，可以加簡單的 rate limit 或驗證碼。
+- `trip_posts` 的新增權限對所有人開放（demo 階段的合理取捨），任何拿到 anon key 的人理論上都能塞資料進去。`profile_leads` 因為改走伺服器端 API，前端不再直接握有寫入權限，相對安全一些，但 `/api/account` 本身仍是公開端點，沒有做防灌水驗證。若之後要防灌水，可以加簡單的 rate limit 或驗證碼。

@@ -33,7 +33,7 @@ function App() {
   const [postDetailId, setPostDetailId] = useState<string | null>(null);
   const { posts, addPost } = usePosts();
   const { favorites, addFavorite } = useFavorites();
-  const { hasIdentity, loading: profileLoading, setNickname } = useProfile();
+  const { hasIdentity, loading: profileLoading, signIn } = useProfile();
 
   const SP = { lat: 25.0541, lng: 121.5097, name: '幻猻家珈琲' };
   const START = { lat: 25.0552, lng: 121.5201, name: '北風社' };
@@ -45,7 +45,7 @@ function App() {
   }
 
   if (!hasIdentity) {
-    return <Login onContinue={setNickname} />;
+    return <Login onContinue={signIn} />;
   }
 
   return (

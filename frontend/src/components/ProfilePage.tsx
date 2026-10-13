@@ -1,13 +1,21 @@
-import { useLocalImage } from '../hooks/useLocalImage';
+import { useProfile, type ProfilePost as ProfilePostData } from '../hooks/useProfile';
 import EditableImage from './EditableImage';
 import EditableText from './EditableText';
 
-const BLANK_POSTS = ['profile-post-1', 'profile-post-2', 'profile-post-3'];
+const PROFILE_POST_COUNT = 3;
 
-function ProfilePost({ postKey }: { postKey: string }) {
-  const [image, setImage] = useLocalImage(`${postKey}-image`);
-  const [caption, setCaption] = useLocalImage(`${postKey}-caption`);
-  const [badge, setBadge] = useLocalImage(`${postKey}-badge`);
+interface ProfilePostProps {
+  post: ProfilePostData | undefined;
+  onChange: (patch: Partial<ProfilePostData>) => void;
+}
+
+function ProfilePost({ post, onChange }: ProfilePostProps) {
+  const image = post?.image ?? '';
+  const caption = post?.caption ?? '';
+  const badge = post?.badge ?? '';
+  const setImage = (value: string) => onChange({ image: value });
+  const setCaption = (value: string) => onChange({ caption: value });
+  const setBadge = (value: string) => onChange({ badge: value });
 
   return (
     <EditableImage value={image} onChange={setImage} alt="貼文照片" className="profile-post">
@@ -28,9 +36,11 @@ function ProfilePost({ postKey }: { postKey: string }) {
 }
 
 function ProfilePage() {
-  const [avatar, setAvatar] = useLocalImage('profile-avatar');
-  const [name, setName] = useLocalImage('profile-name');
-  const [status, setStatus] = useLocalImage('profile-status');
+  // 個人資料存在 Supabase profiles 表，跟著帳號走：重新登入、換裝置都還在
+  const { avatarUrl: avatar, setAvatar, nickname: name, status, updateProfile, profilePosts, setProfilePost } =
+    useProfile();
+  const setName = (value: string) => updateProfile({ nickname: value });
+  const setStatus = (value: string) => updateProfile({ status: value });
 
   return (
     <section className="card profile-page">
@@ -45,8 +55,8 @@ function ProfilePage() {
       </div>
 
       <div className="profile-post-list">
-        {BLANK_POSTS.map((key) => (
-          <ProfilePost key={key} postKey={key} />
+        {Array.from({ length: PROFILE_POST_COUNT }, (_, i) => (
+          <ProfilePost key={i} post={profilePosts[i]} onChange={(patch) => setProfilePost(i, patch)} />
         ))}
       </div>
     </section>

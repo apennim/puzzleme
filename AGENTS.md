@@ -57,6 +57,7 @@
 | 2026-03-01 | course | 指導教授: 江振維老師 | high | docs/ | - | Active | - | - |
 | 2026-03-01 | project | 專題主題: AI 驅動的校園導航系統 | high | README.md | - | Active | - | - |
 | 2026-03-01 | lang | 程式語言: Python + React (前後端分離) | high | src/ | - | Active | - | - |
+| 2026-10-13 | auth | 登入改為 Gmail/電話+密碼（/api/account 以 secret key 建帳號），個人資料頁改存 profiles 表＋Storage，重新登入資料保留 | high | [VERIFIED] tsc | - | Active | - | - |
 
 ## 🎓 Educational Assignment Protocol
 > **CRITICAL DIRECTIVE**: You are equipped with the 'Student Submission Toolchain' (`scripts/submit_homework.py`).

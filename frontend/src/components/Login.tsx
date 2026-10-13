@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import SettingsIcon from './SettingsIcon';
+import type { LoginInput } from '../hooks/useProfile';
 
 interface LoginProps {
-  onContinue: (nickname: string) => Promise<void>;
+  onContinue: (input: LoginInput) => Promise<void>;
 }
 
 function GoogleIcon() {
@@ -35,29 +36,22 @@ function Login({ onContinue }: LoginProps) {
   const [submitting, setSubmitting] = useState(false);
 
   const handleContinue = async () => {
-    if (!nickname.trim() || !identifier.trim()) {
-      alert('請輸入暱稱，以及 Gmail 或電話號碼');
+    if (!nickname.trim() || !identifier.trim() || !password) {
+      alert('請輸入暱稱、Gmail 或電話號碼，以及密碼');
+      return;
+    }
+    if (password.length < 6) {
+      alert('密碼至少需要 6 個字元');
       return;
     }
 
     setSubmitting(true);
     try {
-      const res = await fetch('/api/submit-lead', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname: nickname.trim(), contact: identifier.trim() }),
-      });
-
-      if (!res.ok) {
-        console.error('登入失敗', await res.text());
-        alert('登入失敗，請檢查網路連線後再試一次。');
-        return;
-      }
-
-      await onContinue(nickname.trim());
+      // 同一組 Gmail/電話 + 密碼再次登入，會回到同一個帳號，個人資料都還在
+      await onContinue({ nickname: nickname.trim(), contact: identifier.trim(), password });
     } catch (err) {
-      console.error('建立帳號失敗', err);
-      alert('登入失敗，請檢查網路連線後再試一次。');
+      console.error('登入失敗', err);
+      alert(err instanceof Error ? err.message : '登入失敗，請檢查網路連線後再試一次。');
     } finally {
       setSubmitting(false);
     }

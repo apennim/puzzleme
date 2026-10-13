@@ -1,4 +1,4 @@
-import { useLocalImage } from '../hooks/useLocalImage';
+import { useProfile } from '../hooks/useProfile';
 import type { UserPost } from '../hooks/usePosts';
 import EditableImage from './EditableImage';
 
@@ -51,13 +51,12 @@ function DynamicFeedPost({ post, onOpen }: { post: UserPost; onOpen: () => void 
 
 interface HomeFeedProps {
   posts: UserPost[];
-  userAvatarKey?: string;
   onOpenFavorites?: () => void;
   onOpenPost?: (id: string) => void;
 }
 
-function HomeFeed({ posts: dynamicPosts, userAvatarKey = 'home-my-avatar', onOpenFavorites, onOpenPost }: HomeFeedProps) {
-  const [myAvatar, setMyAvatar] = useLocalImage(userAvatarKey);
+function HomeFeed({ posts: dynamicPosts, onOpenFavorites, onOpenPost }: HomeFeedProps) {
+  const { avatarUrl: myAvatar, setAvatar: setMyAvatar } = useProfile();
 
   return (
     <section className="card home-feed">

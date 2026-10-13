@@ -18,16 +18,18 @@ create table if not exists trip_posts (
 
 alter table trip_posts enable row level security;
 
+-- 角色要同時列 anon 與 authenticated：App 改用 Supabase 匿名登入後，登入者的角色是
+-- authenticated（不是 anon），只寫 anon 會讓登入後讀不到貼文、也發不了文。
 drop policy if exists "trip_posts public insert" on trip_posts;
 create policy "trip_posts public insert"
   on trip_posts for insert
-  to anon
+  to anon, authenticated
   with check (true);
 
 drop policy if exists "trip_posts public read" on trip_posts;
 create policy "trip_posts public read"
   on trip_posts for select
-  to anon
+  to anon, authenticated
   using (true);
 
 -- 個人資料表單（暱稱 + 聯絡方式，用於後續聯繫試用者）
@@ -146,16 +148,17 @@ create policy "friendships delete involved"
 -- Storage：trip-media bucket 的存取權限
 -- 先到 Dashboard → Storage → New bucket，建立一個名為 "trip-media" 的 Public bucket，
 -- 再回到 SQL Editor 執行下面兩個 policy
+-- （同樣要列 anon 與 authenticated，原因見上方 trip_posts 的說明）
 -- ============================================================
 
 drop policy if exists "trip-media public insert" on storage.objects;
 create policy "trip-media public insert"
   on storage.objects for insert
-  to anon
+  to anon, authenticated
   with check (bucket_id = 'trip-media');
 
 drop policy if exists "trip-media public read" on storage.objects;
 create policy "trip-media public read"
   on storage.objects for select
-  to anon
+  to anon, authenticated
   using (bucket_id = 'trip-media');

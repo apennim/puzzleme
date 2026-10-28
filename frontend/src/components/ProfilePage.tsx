@@ -1,44 +1,73 @@
-import { useProfile, type ProfilePost as ProfilePostData } from '../hooks/useProfile';
+import { useEffect, useRef, useState } from 'react';
+import { useProfile } from '../hooks/useProfile';
 import EditableImage from './EditableImage';
 import EditableText from './EditableText';
 
-const PROFILE_POST_COUNT = 3;
+// 狀態改成按鈕，點開從固定選項挑一個，不再自由打字
+const STATUS_OPTIONS = ['搜尋咖啡廳中...', '找旅伴中...', '規劃行程中...', '旅行中...', '休息中...'];
 
-interface ProfilePostProps {
-  post: ProfilePostData | undefined;
-  onChange: (patch: Partial<ProfilePostData>) => void;
-}
+function StatusButton({ value, onChange }: { value: string; onChange: (next: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
 
-function ProfilePost({ post, onChange }: ProfilePostProps) {
-  const image = post?.image ?? '';
-  const caption = post?.caption ?? '';
-  const badge = post?.badge ?? '';
-  const setImage = (value: string) => onChange({ image: value });
-  const setCaption = (value: string) => onChange({ caption: value });
-  const setBadge = (value: string) => onChange({ badge: value });
+  // 點選單外面或按 Esc 就關閉
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e: MouseEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [open]);
 
   return (
-    <EditableImage value={image} onChange={setImage} alt="貼文照片" className="profile-post">
-      <div className="profile-post-gradient" />
-      <div className="profile-post-caption-wrap" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
-        <EditableText
-          value={caption}
-          onChange={setCaption}
-          placeholder="Interview Texts"
-          className="profile-post-caption"
-        />
-      </div>
-      <div className="profile-post-badge" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
-        <EditableText value={badge} onChange={setBadge} placeholder="日期" className="profile-post-badge-text" />
-      </div>
-    </EditableImage>
+    <div className="profile-status" ref={wrapRef}>
+      <button
+        type="button"
+        className={value ? 'profile-status-btn' : 'profile-status-btn is-empty'}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        {value || '設定狀態'}
+        <span className="profile-status-caret" aria-hidden="true">
+          ▼
+        </span>
+      </button>
+      {open && (
+        <ul className="profile-status-menu" role="menu">
+          {STATUS_OPTIONS.map((option) => (
+            <li key={option} role="none">
+              <button
+                type="button"
+                role="menuitemradio"
+                aria-checked={option === value}
+                className="profile-status-option"
+                onClick={() => {
+                  onChange(option);
+                  setOpen(false);
+                }}
+              >
+                {option}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
 function ProfilePage() {
   // 個人資料存在 Supabase profiles 表，跟著帳號走：重新登入、換裝置都還在
-  const { avatarUrl: avatar, setAvatar, nickname: name, status, updateProfile, profilePosts, setProfilePost } =
-    useProfile();
+  const { avatarUrl: avatar, setAvatar, nickname: name, status, updateProfile } = useProfile();
   const setName = (value: string) => updateProfile({ nickname: value });
   const setStatus = (value: string) => updateProfile({ status: value });
 
@@ -48,16 +77,8 @@ function ProfilePage() {
         <EditableImage value={avatar} onChange={setAvatar} alt="個人頭像" className="profile-avatar" compact />
         <div className="profile-header-text">
           <EditableText value={name} onChange={setName} placeholder="你的名字" className="profile-name" />
-          <div className="profile-status">
-            <EditableText value={status} onChange={setStatus} placeholder="搜尋咖啡廳中..." className="profile-status-text" />
-          </div>
+          <StatusButton value={status} onChange={setStatus} />
         </div>
-      </div>
-
-      <div className="profile-post-list">
-        {Array.from({ length: PROFILE_POST_COUNT }, (_, i) => (
-          <ProfilePost key={i} post={profilePosts[i]} onChange={(patch) => setProfilePost(i, patch)} />
-        ))}
       </div>
     </section>
   );

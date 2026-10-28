@@ -1144,93 +1144,74 @@ body {
 }
 
 .profile-status {
-  display: inline-flex;
-  background: #f5f5f5;
-  border-radius: 999px;
-  padding: 6px 14px;
+  position: relative;
   width: fit-content;
 }
 
-.profile-status-text {
+.profile-status-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  border-radius: 999px;
+  padding: 6px 14px;
+  background: #f5f5f5;
+  color: #424242;
   font-family: Inter, sans-serif;
   font-size: 0.8rem;
-  color: #424242;
-  outline: none;
-  cursor: text;
+  cursor: pointer;
 }
 
-.profile-status-text:empty::before {
-  content: attr(data-placeholder);
+.profile-status-btn:hover {
+  background: #ebebeb;
+}
+
+.profile-status-btn:focus-visible {
+  outline: 2px solid #315a66;
+  outline-offset: 2px;
+}
+
+.profile-status-btn.is-empty {
   color: #999;
 }
 
-.profile-post-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.profile-status-caret {
+  font-size: 0.6rem;
+  color: #315a66;
 }
 
-.profile-post {
-  position: relative;
-  height: 260px;
+.profile-status-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  min-width: 170px;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.profile-status-option {
   width: 100%;
-}
-
-.profile-post-gradient {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.65) 100%);
-  pointer-events: none;
-}
-
-.profile-post-caption-wrap {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  text-align: center;
-}
-
-.profile-post-caption {
-  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 12px;
+  background: none;
+  color: #424242;
   font-family: Inter, sans-serif;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.profile-status-option:hover,
+.profile-status-option[aria-checked='true'] {
+  background: #f3ecec;
+  color: #315a66;
   font-weight: 600;
-  outline: none;
-  cursor: text;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-}
-
-.profile-post-caption:empty::before {
-  content: attr(data-placeholder);
-  color: rgba(255, 255, 255, 0.75);
-}
-
-.profile-post-badge {
-  position: absolute;
-  left: 12px;
-  bottom: 12px;
-  z-index: 2;
-  background: #ec9c9c;
-  border-radius: 999px;
-  padding: 6px 14px;
-}
-
-.profile-post-badge-text {
-  color: #fff;
-  font-family: Inter, sans-serif;
-  font-size: 0.75rem;
-  font-weight: 700;
-  outline: none;
-  cursor: text;
-}
-
-.profile-post-badge-text:empty::before {
-  content: attr(data-placeholder);
-  color: rgba(255, 255, 255, 0.85);
 }
 
 .friend-activity-open-invite {
@@ -1913,4 +1894,9 @@ body {
   .setup-screen {
     padding-top: 64px;
   }
+}
+
+/* 個人資料卡現在只有頭像列，讓狀態選單可以超出卡片範圍顯示 */
+.profile-page {
+  overflow: visible;
 }

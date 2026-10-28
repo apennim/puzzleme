@@ -8,7 +8,7 @@ import { supabase, TRIP_MEDIA_BUCKET } from '../lib/supabaseClient';
  * secret key 建立帳號，已存在就略過），再用 signInWithPassword 登入。同一組帳密
  * 不管換瀏覽器、清資料、換裝置，都會回到同一個 auth.uid()，個人資料也就跟著回來。
  *
- * 個人資料頁的頭像、名字、狀態、3 張貼文都存在 profiles 表（圖片傳到 Storage），
+ * 個人資料頁的頭像、名字、狀態都存在 profiles 表（頭像傳到 Storage），
  * 不再存瀏覽器 localStorage。
  *
  * 這裡用「模組層級的 store + useSyncExternalStore」，讓 App、個人資料頁、首頁、
@@ -16,12 +16,6 @@ import { supabase, TRIP_MEDIA_BUCKET } from '../lib/supabaseClient';
  *
  * 舊版用匿名登入（signInAnonymously）建立的帳號仍然可以繼續用，只是登出後就找不回來。
  */
-export interface ProfilePost {
-  image: string;
-  caption: string;
-  badge: string;
-}
-
 export interface LoginInput {
   nickname: string;
   contact: string;
@@ -36,7 +30,6 @@ interface ProfileState {
   status: string;
   /** 所在地點（縣市）；空字串代表還沒填完「建立個人資料」頁 */
   location: string;
-  profilePosts: ProfilePost[];
   /** 剛載入、還在確認有沒有既有 session 時為 true，避免閃一下登入畫面 */
   loading: boolean;
 }
@@ -49,7 +42,6 @@ export interface Profile extends ProfileState {
   updateProfile: (patch: Partial<Pick<ProfileState, 'nickname' | 'status' | 'location'>>) => Promise<boolean>;
   /** 傳入 EditableImage 給的 data URL，上傳到 Storage 後存成頭像 */
   setAvatar: (dataUrl: string) => Promise<void>;
-  setProfilePost: (index: number, patch: Partial<ProfilePost>) => Promise<void>;
 }
 
 const EMPTY_STATE: ProfileState = {
@@ -59,7 +51,6 @@ const EMPTY_STATE: ProfileState = {
   avatarUrl: '',
   status: '',
   location: '',
-  profilePosts: [],
   loading: true,
 };
 
@@ -109,14 +100,13 @@ interface ProfileRow {
   avatar_url: string | null;
   status: string | null;
   location: string | null;
-  profile_posts: ProfilePost[] | null;
 }
 
 /** 讀取 profiles 那一筆；沒有資料（新帳號）就用 fallbackNickname 建一筆 */
 async function loadProfile(userId: string, fallbackNickname?: string) {
   const { data, error } = await supabase
     .from('profiles')
-    .select('nickname, friend_code, avatar_url, status, location, profile_posts')
+    .select('nickname, friend_code, avatar_url, status, location')
     .eq('id', userId)
     .maybeSingle();
   if (error) throw error;
@@ -126,7 +116,7 @@ async function loadProfile(userId: string, fallbackNickname?: string) {
     const { data: created, error: insertError } = await supabase
       .from('profiles')
       .insert({ id: userId, nickname: fallbackNickname })
-      .select('nickname, friend_code, avatar_url, status, location, profile_posts')
+      .select('nickname, friend_code, avatar_url, status, location')
       .single();
     if (insertError) throw insertError;
     row = created as ProfileRow;
@@ -139,7 +129,6 @@ async function loadProfile(userId: string, fallbackNickname?: string) {
     avatarUrl: row?.avatar_url ?? '',
     status: row?.status ?? '',
     location: row?.location ?? '',
-    profilePosts: row?.profile_posts ?? [],
   });
 
   // 舊帳號在加好友代碼欄位之前就建立過、或剛建立的新帳號，這裡補生成一組
@@ -262,28 +251,6 @@ async function setAvatar(dataUrl: string) {
   await saveColumns({ avatar_url: url });
 }
 
-function withPost(posts: ProfilePost[], index: number, patch: Partial<ProfilePost>): ProfilePost[] {
-  const next = [...posts];
-  while (next.length <= index) next.push({ image: '', caption: '', badge: '' });
-  next[index] = { ...next[index], ...patch };
-  return next;
-}
-
-async function setProfilePost(index: number, patch: Partial<ProfilePost>) {
-  const previous = state.profilePosts;
-  setState({ profilePosts: withPost(previous, index, patch) });
-
-  if (patch.image?.startsWith('data:')) {
-    const url = await uploadImage(patch.image, `post-${index}`);
-    if (!url) {
-      setState({ profilePosts: previous });
-      return;
-    }
-    setState({ profilePosts: withPost(state.profilePosts, index, { image: url }) });
-  }
-  await saveColumns({ profile_posts: state.profilePosts });
-}
-
 export function useProfile(): Profile {
   init();
   const snapshot = useSyncExternalStore(subscribe, () => state);
@@ -294,6 +261,5 @@ export function useProfile(): Profile {
     signOut,
     updateProfile,
     setAvatar,
-    setProfilePost,
   };
 }

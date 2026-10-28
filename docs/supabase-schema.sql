@@ -99,6 +99,9 @@ create unique index if not exists profiles_friend_code_key on profiles (friend_c
 alter table profiles add column if not exists status text;
 alter table profiles add column if not exists profile_posts jsonb not null default '[]'::jsonb;
 
+-- 登入後的「建立個人資料」頁：所在地點（縣市），空值代表還沒填完這一頁
+alter table profiles add column if not exists location text;
+
 
 -- ============================================================
 -- 好友關係

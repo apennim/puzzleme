@@ -1775,3 +1775,142 @@ body {
     flex: 1 1 30%;
   }
 }
+
+/* ===== 建立個人資料頁（登入後第一次進入），尺寸依 Figma 設計稿 440px 寬畫面 ===== */
+.setup-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 160px 24px 48px;
+  background: #f3ecec;
+}
+
+.setup-avatar {
+  position: relative;
+  width: min(294px, 72vw);
+  aspect-ratio: 1;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 9999px;
+  background: #f5f5f5 center / cover no-repeat;
+  cursor: pointer;
+}
+
+.setup-avatar:focus-visible {
+  outline: 3px solid #315a66;
+  outline-offset: 4px;
+}
+
+.setup-avatar-logo {
+  width: 37%;
+  height: auto;
+}
+
+.setup-avatar-status,
+.setup-avatar-edit {
+  position: absolute;
+  bottom: 14%;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.85rem;
+}
+
+.setup-avatar-edit {
+  bottom: 6%;
+  right: 12%;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.setup-fields {
+  width: 100%;
+  max-width: 330px;
+  margin-top: 61px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.setup-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.setup-field label {
+  padding-left: 11px;
+  color: rgba(0, 0, 0, 0.6);
+  font-family: Inter, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.setup-field input,
+.setup-field select {
+  width: 100%;
+  height: 40px;
+  border: none;
+  border-radius: 30px;
+  padding: 0 18px;
+  background: #f5f5f5;
+  color: #424242;
+  font-family: Inter, sans-serif;
+  font-size: 0.95rem;
+}
+
+.setup-field select {
+  appearance: none;
+  cursor: pointer;
+  /* 自訂下拉箭頭，配合圓角膠囊外型 */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23315A66' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+}
+
+.setup-field select:invalid,
+.setup-field select option[value=''] {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.setup-error {
+  min-height: 1.4em;
+  margin: 24px 0 0;
+  color: #a8452f;
+  font-size: 0.9rem;
+}
+
+.setup-done {
+  width: 180px;
+  height: 78px;
+  margin-top: 40px;
+  border: none;
+  border-radius: 65px;
+  background: #f5f5f5;
+  box-shadow: 0 0 10.9px rgba(0, 0, 0, 0.25);
+  color: #315a66;
+  font-family: 'Caveat', cursive;
+  font-size: 36px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.setup-done:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+@media (max-height: 760px) {
+  .setup-screen {
+    padding-top: 64px;
+  }
+}

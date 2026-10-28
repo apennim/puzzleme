@@ -117,6 +117,14 @@ npm --prefix frontend run dev
 
 程式碼在 [`frontend/src/hooks/useProfile.ts`](../frontend/src/hooks/useProfile.ts)、[`frontend/src/components/ProfilePage.tsx`](../frontend/src/components/ProfilePage.tsx)。
 
+## 9. 登入後的「建立個人資料」頁
+
+登入後，還沒填過所在地點的帳號會先看到「建立個人資料」頁（依 Figma 設計稿）：上傳大頭貼、輸入名字（預設帶入登入時的暱稱）、選擇所在地點（台灣 22 縣市＋海外），三項都填好按 **Done!** 才會進入 App。這個功能上線前就建立的帳號，下次登入也會看到一次。
+
+你要做的：**再重新執行一次** [docs/supabase-schema.sql](supabase-schema.sql)（新增 `profiles.location` 欄位）。
+
+程式碼在 [`frontend/src/components/ProfileSetup.tsx`](../frontend/src/components/ProfileSetup.tsx)。
+
 ## 已知限制
 
 - `trip_posts` 的新增權限對所有人開放（demo 階段的合理取捨），任何拿到 anon key 的人理論上都能塞資料進去。`profile_leads` 因為改走伺服器端 API，前端不再直接握有寫入權限，相對安全一些，但 `/api/account` 本身仍是公開端點，沒有做防灌水驗證。若之後要防灌水，可以加簡單的 rate limit 或驗證碼。

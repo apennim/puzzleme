@@ -34,6 +34,8 @@ interface ProfileState {
   friendCode: string | null;
   avatarUrl: string;
   status: string;
+  /** 所在地點（縣市）；空字串代表還沒填完「建立個人資料」頁 */
+  location: string;
   profilePosts: ProfilePost[];
   /** 剛載入、還在確認有沒有既有 session 時為 true，避免閃一下登入畫面 */
   loading: boolean;
@@ -44,7 +46,7 @@ export interface Profile extends ProfileState {
   /** 登入畫面送出時呼叫：帳號不存在就建立，存在就用密碼登入 */
   signIn: (input: LoginInput) => Promise<void>;
   signOut: () => Promise<void>;
-  updateProfile: (patch: Partial<Pick<ProfileState, 'nickname' | 'status'>>) => Promise<void>;
+  updateProfile: (patch: Partial<Pick<ProfileState, 'nickname' | 'status' | 'location'>>) => Promise<boolean>;
   /** 傳入 EditableImage 給的 data URL，上傳到 Storage 後存成頭像 */
   setAvatar: (dataUrl: string) => Promise<void>;
   setProfilePost: (index: number, patch: Partial<ProfilePost>) => Promise<void>;
@@ -56,6 +58,7 @@ const EMPTY_STATE: ProfileState = {
   friendCode: null,
   avatarUrl: '',
   status: '',
+  location: '',
   profilePosts: [],
   loading: true,
 };
@@ -105,6 +108,7 @@ interface ProfileRow {
   friend_code: string | null;
   avatar_url: string | null;
   status: string | null;
+  location: string | null;
   profile_posts: ProfilePost[] | null;
 }
 
@@ -112,7 +116,7 @@ interface ProfileRow {
 async function loadProfile(userId: string, fallbackNickname?: string) {
   const { data, error } = await supabase
     .from('profiles')
-    .select('nickname, friend_code, avatar_url, status, profile_posts')
+    .select('nickname, friend_code, avatar_url, status, location, profile_posts')
     .eq('id', userId)
     .maybeSingle();
   if (error) throw error;
@@ -122,7 +126,7 @@ async function loadProfile(userId: string, fallbackNickname?: string) {
     const { data: created, error: insertError } = await supabase
       .from('profiles')
       .insert({ id: userId, nickname: fallbackNickname })
-      .select('nickname, friend_code, avatar_url, status, profile_posts')
+      .select('nickname, friend_code, avatar_url, status, location, profile_posts')
       .single();
     if (insertError) throw insertError;
     row = created as ProfileRow;
@@ -134,6 +138,7 @@ async function loadProfile(userId: string, fallbackNickname?: string) {
     friendCode: row?.friend_code ?? null,
     avatarUrl: row?.avatar_url ?? '',
     status: row?.status ?? '',
+    location: row?.location ?? '',
     profilePosts: row?.profile_posts ?? [],
   });
 
@@ -193,8 +198,9 @@ async function signOut() {
   setState({ ...EMPTY_STATE, loading: false });
 }
 
-async function saveColumns(columns: Record<string, unknown>) {
-  if (!state.userId) return;
+/** 回傳是否儲存成功，讓「建立個人資料」頁可以決定要不要進入 App */
+async function saveColumns(columns: Record<string, unknown>): Promise<boolean> {
+  if (!state.userId) return false;
   const { error } = await supabase
     .from('profiles')
     .update({ ...columns, updated_at: new Date().toISOString() })
@@ -202,23 +208,31 @@ async function saveColumns(columns: Record<string, unknown>) {
   if (error) {
     console.error('儲存個人資料失敗', error);
     alert('個人資料儲存失敗，請檢查網路連線後再試一次。');
+    return false;
   }
+  return true;
 }
 
-async function updateProfile(patch: Partial<Pick<ProfileState, 'nickname' | 'status'>>) {
+async function updateProfile(patch: Partial<Pick<ProfileState, 'nickname' | 'status' | 'location'>>): Promise<boolean> {
   const columns: Record<string, unknown> = {};
   if (patch.nickname !== undefined) {
     const trimmed = patch.nickname.trim();
     // 暱稱是必填欄位（發文、加好友都會顯示），清空時維持原本的
-    if (!trimmed || trimmed === state.nickname) return;
-    columns.nickname = trimmed;
-    setState({ nickname: trimmed });
+    if (trimmed && trimmed !== state.nickname) {
+      columns.nickname = trimmed;
+      setState({ nickname: trimmed });
+    }
   }
   if (patch.status !== undefined) {
     columns.status = patch.status.trim();
     setState({ status: patch.status.trim() });
   }
-  await saveColumns(columns);
+  if (patch.location !== undefined) columns.location = patch.location;
+  if (Object.keys(columns).length === 0) return true;
+  const ok = await saveColumns(columns);
+  // 地點決定要不要顯示「建立個人資料」頁，所以等雲端存好才更新，避免存失敗卻已進入 App
+  if (ok && patch.location !== undefined) setState({ location: patch.location });
+  return ok;
 }
 
 /** data URL → 上傳到 trip-media bucket 的 profiles/<uid>/ 底下，回傳公開網址 */

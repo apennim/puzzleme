@@ -18,6 +18,7 @@ import FavoritesBox from './components/FavoritesBox';
 import FavoriteDetail from './components/FavoriteDetail';
 import Login from './components/Login';
 import PostDetail from './components/PostDetail';
+import ProfileSetup from './components/ProfileSetup';
 
 const secondaryTabs = ['Map'] as const;
 type Tab = NavTab | typeof secondaryTabs[number];
@@ -33,7 +34,7 @@ function App() {
   const [postDetailId, setPostDetailId] = useState<string | null>(null);
   const { posts, addPost } = usePosts();
   const { favorites, addFavorite } = useFavorites();
-  const { hasIdentity, loading: profileLoading, signIn } = useProfile();
+  const { hasIdentity, location: profileLocation, loading: profileLoading, signIn } = useProfile();
 
   const SP = { lat: 25.0541, lng: 121.5097, name: '幻猻家珈琲' };
   const START = { lat: 25.0552, lng: 121.5201, name: '北風社' };
@@ -46,6 +47,11 @@ function App() {
 
   if (!hasIdentity) {
     return <Login onContinue={signIn} />;
+  }
+
+  // 還沒填過所在地點 = 還沒完成「建立個人資料」（新帳號、或這個功能上線前建立的帳號）
+  if (!profileLocation) {
+    return <ProfileSetup />;
   }
 
   return (

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useProfile } from '../hooks/useProfile';
+import type { UserPost } from '../hooks/usePosts';
 import EditableImage from './EditableImage';
 import EditableText from './EditableText';
 
@@ -65,7 +66,34 @@ function StatusButton({ value, onChange }: { value: string; onChange: (next: str
   );
 }
 
-function ProfilePage() {
+function formatPostDate(timestamp: number): string {
+  const d = new Date(timestamp);
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+/** 個人主頁的貼文卡：照片滿版、下方漸層，中間是文案，左下角粉紅日期標籤 */
+function ProfilePostCard({ post, onOpen }: { post: UserPost; onOpen: () => void }) {
+  return (
+    <button type="button" className="profile-post" onClick={onOpen} aria-label={`查看貼文：${post.caption || post.location || '行程貼文'}`}>
+      {post.media && post.mediaType === 'video' ? (
+        <video className="profile-post-media" src={post.media} muted playsInline preload="metadata" />
+      ) : post.media ? (
+        <img className="profile-post-media" src={post.media} alt="" loading="lazy" />
+      ) : null}
+      <div className="profile-post-gradient" />
+      {post.caption && <p className="profile-post-caption">{post.caption}</p>}
+      <span className="profile-post-badge">{formatPostDate(post.createdAt)}</span>
+    </button>
+  );
+}
+
+interface ProfilePageProps {
+  /** 自己發的行程貼文（App 依 authorId 篩好），最新的在最上面 */
+  posts: UserPost[];
+  onOpenPost: (id: string) => void;
+}
+
+function ProfilePage({ posts, onOpenPost }: ProfilePageProps) {
   // 個人資料存在 Supabase profiles 表，跟著帳號走：重新登入、換裝置都還在
   const { avatarUrl: avatar, setAvatar, nickname: name, status, updateProfile } = useProfile();
   const setName = (value: string) => updateProfile({ nickname: value });
@@ -79,6 +107,13 @@ function ProfilePage() {
           <EditableText value={name} onChange={setName} placeholder="你的名字" className="profile-name" />
           <StatusButton value={status} onChange={setStatus} />
         </div>
+      </div>
+
+      <div className="profile-post-list">
+        {posts.length === 0 && <p className="profile-post-empty">還沒有發布過行程貼文，點右下角「＋ 新增行程貼文」發布第一篇吧！</p>}
+        {posts.map((post) => (
+          <ProfilePostCard key={post.id} post={post} onOpen={() => onOpenPost(post.id)} />
+        ))}
       </div>
     </section>
   );

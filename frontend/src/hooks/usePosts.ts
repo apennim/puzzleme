@@ -10,6 +10,8 @@ export interface UserPost {
   mediaType: 'image' | 'video' | '';
   authorName: string;
   authorAvatar: string;
+  /** 發文者的 auth.uid()；舊貼文對不回作者時為空字串 */
+  authorId: string;
   createdAt: number;
 }
 
@@ -22,6 +24,7 @@ interface TripPostRow {
   media_type: string | null;
   author_name: string | null;
   author_avatar: string | null;
+  author_id: string | null;
   created_at: string;
 }
 
@@ -35,6 +38,7 @@ function fromRow(row: TripPostRow): UserPost {
     mediaType: (row.media_type as UserPost['mediaType']) ?? '',
     authorName: row.author_name ?? '',
     authorAvatar: row.author_avatar ?? '',
+    authorId: row.author_id ?? '',
     createdAt: new Date(row.created_at).getTime(),
   };
 }

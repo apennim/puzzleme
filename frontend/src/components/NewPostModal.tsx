@@ -68,6 +68,7 @@ function NewPostModal({ onClose, onSubmit }: NewPostModalProps) {
         mediaType,
         authorName: myName.trim() || '匿名旅人',
         authorAvatar: myAvatar,
+        authorId: '', // 由資料庫的預設值 auth.uid() 自動帶入
         createdAt: Date.now(),
       });
       onClose();

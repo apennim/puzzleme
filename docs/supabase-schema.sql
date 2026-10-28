@@ -32,6 +32,19 @@ create policy "trip_posts public read"
   to anon, authenticated
   using (true);
 
+-- 貼文作者：個人主頁要列出「我發的貼文」。新貼文由資料庫自動帶入發文者的 auth.uid()，
+-- 前端不用另外傳。
+alter table trip_posts
+  add column if not exists author_id uuid default auth.uid() references auth.users(id) on delete set null;
+
+-- 舊貼文補上作者：頭像網址裡有 profiles/<uid>/ 的（帳密登入後發的文），就能對回是誰發的。
+-- 更早、沒有頭像網址的貼文對不回作者，維持空值，只會出現在首頁、不會出現在個人主頁。
+update trip_posts t
+set author_id = u.id
+from auth.users u
+where t.author_id is null
+  and u.id::text = substring(t.author_avatar from '/profiles/([0-9a-f-]{36})/');
+
 -- 個人資料表單（暱稱 + 聯絡方式，用於後續聯繫試用者）
 create table if not exists profile_leads (
   id uuid primary key default gen_random_uuid(),

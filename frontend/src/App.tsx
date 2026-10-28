@@ -34,7 +34,7 @@ function App() {
   const [postDetailId, setPostDetailId] = useState<string | null>(null);
   const { posts, addPost } = usePosts();
   const { favorites, addFavorite } = useFavorites();
-  const { hasIdentity, location: profileLocation, loading: profileLoading, signIn } = useProfile();
+  const { userId, hasIdentity, location: profileLocation, loading: profileLoading, signIn } = useProfile();
 
   const SP = { lat: 25.0541, lng: 121.5097, name: '幻猻家珈琲' };
   const START = { lat: 25.0552, lng: 121.5201, name: '北風社' };
@@ -71,7 +71,17 @@ function App() {
       </header>
 
       <main className="app-main">
-        {showProfile && <ProfilePage />}
+        {showProfile && (
+          <ProfilePage
+            posts={posts.filter((p) => userId && p.authorId === userId)}
+            onOpenPost={(id) => {
+              // 點個人主頁的貼文，跳到首頁的貼文詳細頁
+              setShowProfile(false);
+              setActiveTab('Home');
+              setPostDetailId(id);
+            }}
+          />
+        )}
         {!showProfile && activeTab === 'Favorites' && favoriteDetailId && (() => {
           const index = favorites.findIndex((f) => f.id === favoriteDetailId);
           const favorite = favorites[index];

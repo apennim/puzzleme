@@ -28,13 +28,13 @@ function PostDetail({ post, onClose }: PostDetailProps) {
         </div>
       </div>
 
+      {/* 貼文內頁顯示完整照片（不裁切），首頁卡片才用固定比例 */}
       {post.media && (
-        <div
-          className="post-detail-media"
-          style={post.mediaType === 'image' ? { backgroundImage: `url(${post.media})` } : undefined}
-        >
-          {post.mediaType === 'video' && (
+        <div className="post-detail-media">
+          {post.mediaType === 'video' ? (
             <video src={post.media} controls className="post-detail-video" />
+          ) : (
+            <img src={post.media} alt={post.caption || '貼文照片'} className="post-detail-image" />
           )}
         </div>
       )}

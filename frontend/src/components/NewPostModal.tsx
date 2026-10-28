@@ -3,6 +3,7 @@ import { useProfile } from '../hooks/useProfile';
 import type { UserPost } from '../hooks/usePosts';
 import { supabase, TRIP_MEDIA_BUCKET } from '../lib/supabaseClient';
 import EditableImage from './EditableImage';
+import ImageCropper from './ImageCropper';
 
 const FRIEND_OPTIONS = ['J0anna', 'Muoooo1', '北風社小編', 'Mitty'];
 
@@ -21,6 +22,9 @@ function NewPostModal({ onClose, onSubmit }: NewPostModalProps) {
   const [mediaFile, setMediaFile] = useState<File | undefined>(undefined);
   const [mediaType, setMediaType] = useState<'image' | 'video' | ''>('');
   const [submitting, setSubmitting] = useState(false);
+  /** 有值時顯示裁切視窗；originalImage 保留原圖，讓使用者可以「重新裁切」 */
+  const [cropSource, setCropSource] = useState('');
+  const [originalImage, setOriginalImage] = useState('');
 
   const toggleFriend = (name: string) => {
     setTaggedFriends((prev) => (prev.includes(name) ? prev.filter((f) => f !== name) : [...prev, name]));
@@ -28,11 +32,24 @@ function NewPostModal({ onClose, onSubmit }: NewPostModalProps) {
 
   const handleMediaFile = (file: File | undefined) => {
     if (!file) return;
-    setMediaFile(file);
-    setMediaType(file.type.startsWith('video') ? 'video' : 'image');
     const reader = new FileReader();
-    reader.onload = () => setMediaPreview(String(reader.result));
+    if (file.type.startsWith('video')) {
+      setMediaFile(file);
+      setMediaType('video');
+      reader.onload = () => setMediaPreview(String(reader.result));
+    } else {
+      // 照片先打開裁切視窗，確認裁切後才當成要上傳的檔案
+      reader.onload = () => setCropSource(String(reader.result));
+    }
     reader.readAsDataURL(file);
+  };
+
+  const handleCropped = (blob: Blob) => {
+    setMediaFile(new File([blob], 'photo.jpg', { type: 'image/jpeg' }));
+    setMediaType('image');
+    setMediaPreview(URL.createObjectURL(blob));
+    setOriginalImage(cropSource);
+    setCropSource('');
   };
 
   const handleSubmit = async () => {
@@ -121,9 +138,17 @@ function NewPostModal({ onClose, onSubmit }: NewPostModalProps) {
                 type="file"
                 accept="image/*,video/*"
                 hidden
-                onChange={(e) => handleMediaFile(e.target.files?.[0])}
+                onChange={(e) => {
+                  handleMediaFile(e.target.files?.[0]);
+                  e.target.value = ''; // 讓同一張照片可以再選一次
+                }}
               />
             </label>
+            {mediaType === 'image' && originalImage && (
+              <button type="button" className="new-post-recrop" onClick={() => setCropSource(originalImage)}>
+                ✂ 重新裁切
+              </button>
+            )}
           </div>
 
           <div className="new-post-section">
@@ -169,6 +194,10 @@ function NewPostModal({ onClose, onSubmit }: NewPostModalProps) {
           {submitting ? '發布中…' : '發布貼文'}
         </button>
       </div>
+
+      {cropSource && (
+        <ImageCropper src={cropSource} onCancel={() => setCropSource('')} onConfirm={handleCropped} />
+      )}
     </div>
   );
 }

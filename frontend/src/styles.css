@@ -522,10 +522,15 @@ body {
 }
 
 .home-feed-list {
-  display: flex;
-  flex-direction: column;
+  /* 手機一欄；電腦螢幕寬時自動排成多欄，照片不會被拉成細長條 */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
   gap: 18px;
   padding: 0 18px 20px;
+}
+
+.home-feed-empty {
+  grid-column: 1 / -1;
 }
 
 .feed-post {
@@ -555,7 +560,8 @@ body {
 
 .feed-post-media {
   position: relative;
-  height: 216px;
+  /* 跟上傳裁切的比例一樣（4:5），裁到哪就顯示到哪 */
+  aspect-ratio: 4 / 5;
   background-size: cover;
   background-position: center;
   border-radius: 12px;
@@ -1055,7 +1061,105 @@ body {
 .new-post-media-preview {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+}
+
+.new-post-media:has(.new-post-media-preview) {
+  height: 280px;
+}
+
+.new-post-recrop {
+  margin-top: 8px;
+  padding: 6px 14px;
+  border: 1px solid #c9b8b0;
+  border-radius: 999px;
+  background: #fff;
+  color: #8f5c69;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* 照片裁切視窗（疊在發文視窗上面） */
+.cropper-overlay {
+  z-index: 300;
+  align-items: center;
+  padding: 16px;
+}
+
+.cropper-panel {
+  background: #fff;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 18px;
+}
+
+.cropper-frame {
+  position: relative;
+  width: min(100%, calc((100dvh - 260px) * 0.8));
+  margin: 0 auto;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #222;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.cropper-frame:active {
+  cursor: grabbing;
+}
+
+.cropper-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  pointer-events: none;
+}
+
+.cropper-hint {
+  margin: 10px 0 4px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #8f5c69;
+}
+
+.cropper-zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #8f5c69;
+  font-weight: 700;
+}
+
+.cropper-zoom input {
+  flex: 1;
+  accent-color: #ec9c9c;
+}
+
+.cropper-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.cropper-cancel {
+  flex: 1;
+  border: 1px solid #c9b8b0;
+  border-radius: 999px;
+  background: #fff;
+  color: #8f5c69;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cropper-confirm {
+  flex: 2;
+  margin-top: 0;
 }
 
 .new-post-media-placeholder {
@@ -1689,17 +1793,19 @@ body {
 
 .post-detail-media {
   width: 100%;
-  height: min(360px, 36vh);
-  height: min(360px, 36dvh);
-  background-size: cover;
-  background-position: center;
+  display: flex;
+  justify-content: center;
   background-color: #f4ebe8;
 }
 
+/* 完整顯示照片：寬度最多填滿、高度最多 75% 螢幕，不裁切 */
+.post-detail-image,
 .post-detail-video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  display: block;
+  max-width: 100%;
+  max-height: 75vh;
+  max-height: 75dvh;
+  object-fit: contain;
 }
 
 .post-detail-tags {

@@ -125,6 +125,14 @@ npm --prefix frontend run dev
 
 程式碼在 [`frontend/src/components/ProfileSetup.tsx`](../frontend/src/components/ProfileSetup.tsx)。
 
+## 10. 編輯／刪除自己的貼文
+
+打開自己發的貼文，右上角 ☰ 會出現「編輯貼文」（改文案、行程地點）和「刪除貼文」。別人的貼文、以及對不回作者的舊貼文不會出現這個選單。
+
+你要做的：**再重新執行一次** [docs/supabase-schema.sql](supabase-schema.sql)（新增 `trip_posts` 的 update／delete 權限，只允許 `author_id = auth.uid()` 的作者本人）。沒執行的話，按儲存或刪除會跳出「只能編輯／刪除自己發的貼文」的錯誤。
+
+程式碼在 [`frontend/src/components/PostDetail.tsx`](../frontend/src/components/PostDetail.tsx)、[`frontend/src/hooks/usePosts.ts`](../frontend/src/hooks/usePosts.ts)。
+
 ## 已知限制
 
 - `trip_posts` 的新增權限對所有人開放（demo 階段的合理取捨），任何拿到 anon key 的人理論上都能塞資料進去。`profile_leads` 因為改走伺服器端 API，前端不再直接握有寫入權限，相對安全一些，但 `/api/account` 本身仍是公開端點，沒有做防灌水驗證。若之後要防灌水，可以加簡單的 rate limit 或驗證碼。

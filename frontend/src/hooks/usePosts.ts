@@ -94,5 +94,40 @@ export function usePosts() {
     setPosts((prev) => [fromRow(data as TripPostRow), ...prev]);
   };
 
-  return { posts, addPost, loading };
+  /**
+   * 只能改自己的貼文（RLS 限制 author_id = auth.uid()）。
+   * 權限不符時 Supabase 不會回錯誤、只是改到 0 筆，所以用 .select() 檢查有沒有真的改到。
+   */
+  const updatePost = async (id: string, patch: { caption: string; location: string }): Promise<boolean> => {
+    const { data, error } = await supabase
+      .from('trip_posts')
+      .update({ caption: patch.caption, location: patch.location })
+      .eq('id', id)
+      .select();
+
+    if (error || !data?.length) {
+      console.error('編輯貼文失敗', error);
+      alert('編輯失敗：只能編輯自己發的貼文，或請檢查網路連線後再試一次。');
+      return false;
+    }
+
+    const updated = fromRow(data[0] as TripPostRow);
+    setPosts((prev) => prev.map((p) => (p.id === id ? updated : p)));
+    return true;
+  };
+
+  const deletePost = async (id: string): Promise<boolean> => {
+    const { data, error } = await supabase.from('trip_posts').delete().eq('id', id).select('id');
+
+    if (error || !data?.length) {
+      console.error('刪除貼文失敗', error);
+      alert('刪除失敗：只能刪除自己發的貼文，或請檢查網路連線後再試一次。');
+      return false;
+    }
+
+    setPosts((prev) => prev.filter((p) => p.id !== id));
+    return true;
+  };
+
+  return { posts, addPost, updatePost, deletePost, loading };
 }

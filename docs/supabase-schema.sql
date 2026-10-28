@@ -45,6 +45,21 @@ from auth.users u
 where t.author_id is null
   and u.id::text = substring(t.author_avatar from '/profiles/([0-9a-f-]{36})/');
 
+-- 編輯／刪除貼文：只有作者本人（author_id = 自己的 auth.uid()）可以改或刪自己的貼文。
+-- 對不回作者的舊貼文（author_id 是空值）沒有人能改，維持原樣。
+drop policy if exists "trip_posts author update" on trip_posts;
+create policy "trip_posts author update"
+  on trip_posts for update
+  to authenticated
+  using (author_id = auth.uid())
+  with check (author_id = auth.uid());
+
+drop policy if exists "trip_posts author delete" on trip_posts;
+create policy "trip_posts author delete"
+  on trip_posts for delete
+  to authenticated
+  using (author_id = auth.uid());
+
 -- 個人資料表單（暱稱 + 聯絡方式，用於後續聯繫試用者）
 create table if not exists profile_leads (
   id uuid primary key default gen_random_uuid(),

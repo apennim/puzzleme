@@ -32,7 +32,9 @@ function App() {
   const [showProfile, setShowProfile] = useState(false);
   const [favoriteDetailId, setFavoriteDetailId] = useState<string | null>(null);
   const [postDetailId, setPostDetailId] = useState<string | null>(null);
-  const { posts, addPost } = usePosts();
+  /** 從個人主頁點進貼文時為 true，按返回會回到個人主頁而不是首頁 */
+  const [postFromProfile, setPostFromProfile] = useState(false);
+  const { posts, addPost, updatePost, deletePost } = usePosts();
   const { favorites, addFavorite } = useFavorites();
   const { userId, hasIdentity, location: profileLocation, loading: profileLoading, signIn } = useProfile();
 
@@ -79,6 +81,7 @@ function App() {
               setShowProfile(false);
               setActiveTab('Home');
               setPostDetailId(id);
+              setPostFromProfile(true);
             }}
           />
         )}
@@ -105,13 +108,28 @@ function App() {
         {!showProfile && activeTab === 'Home' && postDetailId && (() => {
           const post = posts.find((p) => p.id === postDetailId);
           if (!post) return null;
-          return <PostDetail post={post} onClose={() => setPostDetailId(null)} />;
+          return (
+            <PostDetail
+              post={post}
+              isOwner={!!userId && post.authorId === userId}
+              onUpdate={(patch) => updatePost(post.id, patch)}
+              onDelete={() => deletePost(post.id)}
+              onClose={() => {
+                setPostDetailId(null);
+                if (postFromProfile) setShowProfile(true);
+                setPostFromProfile(false);
+              }}
+            />
+          );
         })()}
         {!showProfile && activeTab === 'Home' && !postDetailId && (
           <HomeFeed
             posts={posts}
             onOpenFavorites={() => setActiveTab('Favorites')}
-            onOpenPost={(id) => setPostDetailId(id)}
+            onOpenPost={(id) => {
+              setPostDetailId(id);
+              setPostFromProfile(false);
+            }}
           />
         )}
         {activeTab === 'Friend' && <FriendTrip />}
@@ -189,6 +207,7 @@ function App() {
           setActiveTab(tab);
           setFavoriteDetailId(null);
           setPostDetailId(null);
+          setPostFromProfile(false);
         }}
       />
     </div>

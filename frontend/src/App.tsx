@@ -11,6 +11,7 @@ import BottomNav, { type NavTab } from './components/BottomNav';
 import SettingsPanel from './components/SettingsPanel';
 import NewPostModal from './components/NewPostModal';
 import { usePosts } from './hooks/usePosts';
+import { useCompactWhenIdle } from './hooks/useCompactWhenIdle';
 import { useFavorites } from './hooks/useFavorites';
 import { useProfile } from './hooks/useProfile';
 import ProfilePage from './components/ProfilePage';
@@ -35,6 +36,7 @@ function App() {
   /** 從個人主頁點進貼文時為 true，按返回會回到個人主頁而不是首頁 */
   const [postFromProfile, setPostFromProfile] = useState(false);
   const { posts, addPost, updatePost, deletePost } = usePosts();
+  const compactBars = useCompactWhenIdle();
   const { favorites, addFavorite } = useFavorites();
   const { userId, hasIdentity, location: profileLocation, loading: profileLoading, signIn } = useProfile();
 
@@ -187,9 +189,9 @@ function App() {
           />
         )}
       </main>
-      <div style={{ position: 'fixed', right: 20, bottom: 90, zIndex: 80 }}>
-        <button className="new-post-fab" onClick={() => setShowNewPost(true)}>
-          ＋ 新增行程貼文
+      <div className={compactBars ? 'new-post-fab-wrap is-compact' : 'new-post-fab-wrap'}>
+        <button className="new-post-fab" onClick={() => setShowNewPost(true)} aria-label="新增行程貼文">
+          ＋<span className="new-post-fab-label"> 新增行程貼文</span>
         </button>
       </div>
 
@@ -198,6 +200,7 @@ function App() {
       <Timeline pins={matchedPins} visible={showTimeline} onClose={() => setShowTimeline(false)} />
 
       <BottomNav
+        compact={compactBars}
         active={
           (['Home', 'Match', 'Friend', 'Favorites'] as const).includes(activeTab as NavTab)
             ? (activeTab as NavTab)

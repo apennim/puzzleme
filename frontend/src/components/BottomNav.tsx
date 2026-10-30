@@ -3,6 +3,8 @@ export type NavTab = 'Home' | 'Match' | 'Friend' | 'Favorites';
 interface BottomNavProps {
   active: NavTab;
   onChange: (tab: NavTab) => void;
+  /** 手機上停止滑動時縮小，避免擋住畫面下方的按鈕 */
+  compact?: boolean;
 }
 
 // 圖示路徑取自 Figma 匯出的 ToolBar.svg（原始座標，保留 Figma 精確造型）
@@ -57,9 +59,9 @@ const items: { tab: NavTab; label: string; icon: JSX.Element }[] = [
   },
 ];
 
-function BottomNav({ active, onChange }: BottomNavProps) {
+function BottomNav({ active, onChange, compact }: BottomNavProps) {
   return (
-    <nav className="bottom-nav" role="tablist" aria-label="主要導覽">
+    <nav className={compact ? 'bottom-nav is-compact' : 'bottom-nav'} role="tablist" aria-label="主要導覽">
       {items.map((item) => (
         <button
           key={item.tab}

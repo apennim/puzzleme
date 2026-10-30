@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 // @ts-ignore
 import * as turf from '@turf/turf';
+import { useProfile } from '../hooks/useProfile';
 import type { Trip, TripPerson } from '../hooks/useTrips';
 
 interface TripInviteProps {
@@ -10,14 +11,17 @@ interface TripInviteProps {
   onRespond: (join: boolean) => Promise<boolean>;
 }
 
-/** 右上角最多顯示 3 個頭像：發起人＋已加入的人，不足 3 個就留一個空位（設計稿的灰色圓） */
-const AVATAR_SLOTS = 3;
+/** 右上角最多顯示幾個頭像，超過的人數用「+N」表示 */
+const MAX_AVATARS = 3;
 
-function Avatar({ person }: { person: TripPerson }) {
+/** pending = 還沒回覆邀請的人，頭像半透明 */
+function Avatar({ person, pending }: { person: TripPerson; pending?: boolean }) {
+  const className = pending ? 'trip-invite-avatar is-pending' : 'trip-invite-avatar';
+  const title = pending ? `${person.nickname}（還沒回覆）` : person.nickname;
   return person.avatarUrl ? (
-    <img className="trip-invite-avatar" src={person.avatarUrl} alt={person.nickname} title={person.nickname} />
+    <img className={className} src={person.avatarUrl} alt={person.nickname} title={title} />
   ) : (
-    <span className="trip-invite-avatar trip-invite-avatar-initial" title={person.nickname}>
+    <span className={`${className} trip-invite-avatar-initial`} title={title}>
       {person.nickname.slice(0, 1)}
     </span>
   );
@@ -56,11 +60,20 @@ function useDistanceKm(lat: number | null, lng: number | null): number | null {
  */
 function TripInvite({ trip, onClose, onRespond }: TripInviteProps) {
   const [busy, setBusy] = useState(false);
+  const { userId } = useProfile();
   const distanceKm = useDistanceKm(trip.placeLat, trip.placeLng);
 
   const joinedPeople: TripPerson[] = [trip.organizer, ...trip.members.filter((m) => m.status === 'joined')];
-  const shown = joinedPeople.slice(0, AVATAR_SLOTS);
-  const emptySlots = Math.max(0, AVATAR_SLOTS - shown.length);
+  // 頭像框數量 = 實際參與的人數：發起人＋已加入＋其他還沒回覆的（半透明）。
+  // 自己還沒按 Join! 前不顯示自己，婉拒的人也不顯示，不再補空的灰色圓
+  const avatarPeople = [
+    ...joinedPeople.map((p) => ({ person: p, pending: false })),
+    ...trip.members
+      .filter((m) => m.status === 'invited' && m.userId !== userId)
+      .map((m) => ({ person: m as TripPerson, pending: true })),
+  ];
+  const shown = avatarPeople.slice(0, MAX_AVATARS);
+  const moreCount = avatarPeople.length - shown.length;
   const waitingCount = trip.members.filter((m) => m.status === 'invited').length;
 
   const handleRespond = async (join: boolean) => {
@@ -82,12 +95,10 @@ function TripInvite({ trip, onClose, onRespond }: TripInviteProps) {
           </svg>
         </button>
         <div className="trip-invite-avatars" aria-label={`已加入：${joinedPeople.map((p) => p.nickname).join('、')}`}>
-          {shown.map((p) => (
-            <Avatar key={p.userId} person={p} />
+          {shown.map(({ person, pending }) => (
+            <Avatar key={person.userId} person={person} pending={pending} />
           ))}
-          {Array.from({ length: emptySlots }, (_, i) => (
-            <span key={`empty-${i}`} className="trip-invite-avatar trip-invite-avatar-empty" />
-          ))}
+          {moreCount > 0 && <span className="trip-invite-avatar trip-invite-avatar-more">+{moreCount}</span>}
         </div>
       </div>
 

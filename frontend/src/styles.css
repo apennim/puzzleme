@@ -926,6 +926,15 @@ body {
   background: #ffe1e1;
 }
 
+/* 新增貼文按鈕的定位（原本寫在 App.tsx 的 inline style） */
+.new-post-fab-wrap {
+  position: fixed;
+  right: 20px;
+  bottom: 90px;
+  z-index: 80;
+  transition: bottom 0.25s ease;
+}
+
 .new-post-fab {
   border: none;
   border-radius: 999px;
@@ -1391,6 +1400,19 @@ body {
   margin-left: -18px;
 }
 
+.trip-invite-avatar.is-pending {
+  opacity: 0.45;
+}
+
+.trip-invite-avatar-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #424242;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
 .trip-invite-avatar-initial {
   display: flex;
   align-items: center;
@@ -1403,7 +1425,8 @@ body {
 
 .trip-invite-media {
   position: relative;
-  margin-top: -28px;
+  /* 依設計稿：頭像下緣蓋到照片 28px，距離標籤在頭像下方 22px */
+  margin-top: -4px;
   aspect-ratio: 440 / 475;
   background: #e8dcd8;
   box-shadow: 0 4px 28.6px rgba(133, 132, 176, 0.5);
@@ -2269,4 +2292,44 @@ body {
   font-size: 0.75rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+/* ===== 手機：停止滑動時底部工具列、新增貼文按鈕縮小，不擋住畫面下方的按鈕 ===== */
+.bottom-nav,
+.bottom-nav-btn,
+.new-post-fab {
+  transition: padding 0.25s ease, gap 0.25s ease, width 0.25s ease, height 0.25s ease, bottom 0.25s ease, opacity 0.25s ease;
+}
+
+@media (max-width: 720px) {
+  .bottom-nav.is-compact {
+    bottom: 10px;
+    gap: 20px;
+    padding: 4px 14px;
+    opacity: 0.92;
+  }
+
+  .bottom-nav.is-compact .bottom-nav-btn {
+    width: 34px;
+    height: 34px;
+  }
+
+  .bottom-nav.is-compact .bottom-nav-btn svg {
+    transform: scale(0.85);
+  }
+
+  .new-post-fab-wrap.is-compact {
+    bottom: 64px;
+  }
+
+  .new-post-fab-wrap.is-compact .new-post-fab {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    font-size: 1.2rem;
+  }
+
+  .new-post-fab-wrap.is-compact .new-post-fab-label {
+    display: none;
+  }
 }

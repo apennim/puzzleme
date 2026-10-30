@@ -1,11 +1,15 @@
 import { useState, type ReactNode } from 'react';
 import { useProfile } from '../hooks/useProfile';
 import { useFriends } from '../hooks/useFriends';
+import { useTrips, type Trip } from '../hooks/useTrips';
+import TripInvite from './TripInvite';
 
 function FriendTrip() {
   const { userId, friendCode } = useProfile();
   const { friends, incoming, outgoing, loading, sendRequest, respondToRequest, cancelRequest, removeFriend } =
     useFriends(userId);
+  const { trips, respond } = useTrips(userId);
+  const [openTripId, setOpenTripId] = useState<string | null>(null);
 
   const [codeInput, setCodeInput] = useState('');
   const [message, setMessage] = useState('');
@@ -35,6 +39,16 @@ function FriendTrip() {
       // clipboard 權限被擋時就不做事，使用者仍可以自己選取文字複製
     }
   };
+
+  const invites = trips.filter((t) => t.myRole === 'invited');
+  const myTrips = trips.filter((t) => t.myRole === 'organizer' || t.myRole === 'joined');
+  const openTrip = trips.find((t) => t.id === openTripId);
+
+  if (openTrip) {
+    return (
+      <TripInvite trip={openTrip} onClose={() => setOpenTripId(null)} onRespond={(join) => respond(openTrip.id, join)} />
+    );
+  }
 
   return (
     <section className="card friend-trip">
@@ -68,6 +82,22 @@ function FriendTrip() {
           </button>
         </div>
         {message && <p className="friend-add-message">{message}</p>}
+
+        {invites.length > 0 && (
+          <FriendSection title={`行程邀請（${invites.length}）`}>
+            {invites.map((trip) => (
+              <TripRow key={trip.id} trip={trip} onOpen={() => setOpenTripId(trip.id)} />
+            ))}
+          </FriendSection>
+        )}
+
+        {myTrips.length > 0 && (
+          <FriendSection title={`我的行程（${myTrips.length}）`}>
+            {myTrips.map((trip) => (
+              <TripRow key={trip.id} trip={trip} onOpen={() => setOpenTripId(trip.id)} />
+            ))}
+          </FriendSection>
+        )}
 
         {incoming.length > 0 && (
           <FriendSection title={`好友邀請（${incoming.length}）`}>
@@ -118,6 +148,25 @@ function FriendTrip() {
         </FriendSection>
       </div>
     </section>
+  );
+}
+
+/** 行程列表的一列：景點小圖＋名稱＋發起人，點了打開行程邀請畫面 */
+function TripRow({ trip, onOpen }: { trip: Trip; onOpen: () => void }) {
+  const joined = trip.members.filter((m) => m.status === 'joined').length;
+  return (
+    <button type="button" className="friend-row trip-row" onClick={onOpen}>
+      {trip.placeImage ? <img className="trip-row-thumb" src={trip.placeImage} alt="" /> : <span className="trip-row-thumb" />}
+      <span className="trip-row-text">
+        <strong>{trip.placeTitle}</strong>
+        <span>
+          {trip.myRole === 'organizer' ? '你發起的' : `由 ${trip.organizer.nickname} 發起`}・{joined + 1} 人參加
+        </span>
+      </span>
+      <span className="trip-row-arrow" aria-hidden="true">
+        ›
+      </span>
+    </button>
   );
 }
 

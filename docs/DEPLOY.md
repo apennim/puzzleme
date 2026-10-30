@@ -133,6 +133,18 @@ npm --prefix frontend run dev
 
 程式碼在 [`frontend/src/components/PostDetail.tsx`](../frontend/src/components/PostDetail.tsx)、[`frontend/src/hooks/usePosts.ts`](../frontend/src/hooks/usePosts.ts)。
 
+## 11. 好友行程邀請
+
+流程：在「收藏」點進一個景點 → 按「👥 邀請好友同行」→ 勾選好友 → 送出。被邀請的好友打開「好友」分頁，最上面會出現「行程邀請」，點進去就是邀請畫面（依 Figma 設計稿），按 **Join!** 加入、紅色 ✕ 婉拒。加入後右上角會出現他的頭像，發起人和已加入的人在「我的行程」都看得到。
+
+你要做的：**再重新執行一次** [docs/supabase-schema.sql](supabase-schema.sql)（新增 `trips`、`trip_members` 兩張表和權限）。
+
+權限設計：行程只有發起人和被邀請的人看得到；只能邀請已經是好友的人；被邀請的人只能改自己的狀態。
+
+「距離你 X km」需要瀏覽器允許定位，拒絕的話就不顯示。設計稿上的 SNS／TEL 目前景點資料裡沒有，所以先不顯示。
+
+程式碼在 [`frontend/src/components/TripInvite.tsx`](../frontend/src/components/TripInvite.tsx)、[`frontend/src/hooks/useTrips.ts`](../frontend/src/hooks/useTrips.ts)。
+
 ## 已知限制
 
 - `trip_posts` 的新增權限對所有人開放（demo 階段的合理取捨），任何拿到 anon key 的人理論上都能塞資料進去。`profile_leads` 因為改走伺服器端 API，前端不再直接握有寫入權限，相對安全一些，但 `/api/account` 本身仍是公開端點，沒有做防灌水驗證。若之後要防灌水，可以加簡單的 rate limit 或驗證碼。

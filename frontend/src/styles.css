@@ -1328,79 +1328,6 @@ body {
   padding: 0;
 }
 
-.trip-invite-media {
-  position: relative;
-  height: min(420px, 34vh);
-  height: min(420px, 34dvh);
-}
-
-.trip-invite-back {
-  z-index: 2;
-}
-
-.trip-invite-avatars {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  z-index: 2;
-  display: flex;
-}
-
-.trip-invite-distance {
-  position: absolute;
-  top: 74px;
-  right: 16px;
-  z-index: 2;
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 999px;
-  padding: 6px 14px;
-}
-
-.trip-invite-distance-text {
-  font-family: Inter, sans-serif;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #424242;
-  outline: none;
-  cursor: text;
-}
-
-.trip-invite-distance-text:empty::before {
-  content: attr(data-placeholder);
-  color: #999;
-}
-
-.trip-invite-info {
-  padding: 16px 18px 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.trip-invite-contact {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-top: 4px;
-}
-
-.trip-invite-contact-text {
-  font-family: Inter, sans-serif;
-  font-size: 0.8rem;
-  color: #999;
-  outline: none;
-  cursor: text;
-}
-
-.trip-invite-contact-text:empty::before {
-  content: attr(data-placeholder);
-  color: #ccc;
-}
-
-.trip-invite-tags {
-  padding: 0 18px;
-}
-
 .tag-pill-text {
   display: inline-block;
   outline: none;
@@ -1412,66 +1339,275 @@ body {
   opacity: 0.6;
 }
 
-.trip-invite-organizer {
-  margin: 10px 18px 0;
-  display: inline-flex;
-  background: #df5b5b;
-  border-radius: 999px;
-  padding: 8px 16px;
-  width: fit-content;
-}
-
-.trip-invite-organizer-text {
-  color: #fff;
+/* ===== 好友行程邀請畫面（依 Figma 設計稿，寬 440 的手機版面）===== */
+.trip-invite {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding-bottom: 32px;
+  border-radius: 24px;
+  background: #f3ecec;
+  overflow: hidden;
   font-family: Inter, sans-serif;
-  font-size: 0.8rem;
-  font-weight: 600;
-  outline: none;
-  cursor: text;
+  color: #424242;
 }
 
-.trip-invite-organizer-text:empty::before {
-  content: attr(data-placeholder);
-  color: rgba(255, 255, 255, 0.85);
+.trip-invite-top {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  height: 75px;
+  padding: 24px 24px 0 28px;
+}
+
+.trip-invite-back {
+  margin-top: 6px;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.trip-invite-avatars {
+  display: flex;
+  filter: drop-shadow(0 4px 13px #f5f5f5);
+}
+
+.trip-invite-avatar {
+  width: 75px;
+  height: 75px;
+  border: 3px solid #f3ecec;
+  border-radius: 50%;
+  box-sizing: border-box;
+  object-fit: cover;
+  background: #f5f5f5;
+}
+
+.trip-invite-avatar + .trip-invite-avatar {
+  margin-left: -18px;
+}
+
+.trip-invite-avatar-initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e1c6b9;
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.trip-invite-media {
+  position: relative;
+  margin-top: -28px;
+  aspect-ratio: 440 / 475;
+  background: #e8dcd8;
+  box-shadow: 0 4px 28.6px rgba(133, 132, 176, 0.5);
+}
+
+.trip-invite-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 照片往下淡出成淺灰，讓標題可以疊在照片下半部 */
+.trip-invite-fade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(245, 245, 245, 0) 2%, rgba(245, 245, 245, 0.55) 31%, #f5f5f5 66%);
+}
+
+.trip-invite-distance {
+  position: absolute;
+  top: 50px;
+  right: 25px;
+  padding: 8px 18px;
+  border-radius: 40px;
+  background: #f5f5f5;
+  box-shadow: 0 10px 6.8px rgba(66, 66, 66, 0.5), inset 0 -3px 5.7px rgba(66, 66, 66, 0.5);
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 600;
+}
+
+.trip-invite-info {
+  position: absolute;
+  left: 35px;
+  right: 35px;
+  bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.trip-invite-title {
+  margin: 0;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.trip-invite-address {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.trip-invite-tags {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 26px 27px 0;
+}
+
+.trip-invite-tag {
+  padding: 8px 16px;
+  border-radius: 40px;
+  box-shadow: 0 4px 4px rgba(133, 132, 176, 0.25);
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 600;
+}
+
+.trip-invite-tag-0 {
+  background: #ddecc0;
+}
+
+.trip-invite-tag-1 {
+  background: #f5f5f5;
+}
+
+.trip-invite-tag-2 {
+  background: #f6efc2;
+}
+
+.trip-invite-organizer {
+  position: relative;
+  z-index: 2;
+  width: fit-content;
+  margin: 12px 27px 0;
+  padding: 8px 20px;
+  border-radius: 40px;
+  background: #df5b5b;
+  box-shadow: 0 2px 1.6px rgba(0, 0, 0, 0.25);
+  color: #f5f5f5;
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 600;
+}
+
+.trip-invite-organizer strong {
+  font-weight: 700;
 }
 
 .trip-invite-actions {
+  display: flex;
   justify-content: center;
   align-items: center;
-  gap: 24px;
-  padding: 18px;
+  gap: 22px;
+  min-height: 78px;
+  margin-top: 45px;
 }
 
-.btn-join {
+.trip-invite-join {
+  width: 180px;
+  height: 78px;
   border: none;
-  border-radius: 999px;
-  padding: 16px 32px;
-  background: #f9f4f1;
+  border-radius: 65px;
+  background: #f5f5f5;
+  box-shadow: 0 0 10.9px rgba(0, 0, 0, 0.25);
   color: #315a66;
   font-family: 'Caveat', cursive;
-  font-size: 1.6rem;
+  font-size: 36px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
 }
 
-.btn-decline {
-  width: 64px;
-  height: 64px;
+.trip-invite-decline {
+  width: 78px;
+  height: 78px;
   border: none;
   border-radius: 50%;
   background: #df5b5b;
   color: #fff;
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
 }
 
-.trip-invite-joined {
+.trip-invite-join:disabled,
+.trip-invite-decline:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.trip-invite-status {
   margin: 0;
-  font-weight: 700;
   color: #315a66;
+  font-weight: 700;
   text-align: center;
+}
+
+/* 好友分頁的行程列表 */
+.trip-row {
+  width: 100%;
+  border: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  justify-content: flex-start;
+}
+
+.trip-row-thumb {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #e8dcd8;
+}
+
+.trip-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.8rem;
+  color: #8a7a74;
+}
+
+.trip-row-text strong {
+  overflow: hidden;
+  color: #424242;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.trip-row-arrow {
+  color: #8a7a74;
+  font-size: 1.4rem;
+}
+
+.favorite-detail-invite {
+  display: block;
+  margin: 14px 18px 0;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 999px;
+  background: #315a66;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .favorites-box-header {

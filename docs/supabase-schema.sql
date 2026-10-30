@@ -181,6 +181,96 @@ create policy "friendships delete involved"
 
 
 -- ============================================================
+-- 好友行程邀請：從「收藏」的景點發起行程、邀請好友，好友在「好友」分頁按 Join! 加入
+-- trips 存行程（景點資訊複製一份，因為收藏只存在發起人的瀏覽器裡），
+-- trip_members 存「誰被邀請、目前狀態」。發起人不放進 trip_members，用 trips.organizer_id 判斷。
+-- ============================================================
+create table if not exists trips (
+  id uuid primary key default gen_random_uuid(),
+  organizer_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  place_title text not null,
+  place_address text,
+  place_image text,
+  place_tags text[] not null default '{}',
+  place_lat double precision,
+  place_lng double precision,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists trip_members (
+  trip_id uuid not null references trips(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  status text not null default 'invited' check (status in ('invited', 'joined', 'declined')),
+  updated_at timestamptz not null default now(),
+  primary key (trip_id, user_id)
+);
+
+alter table trips enable row level security;
+alter table trip_members enable row level security;
+
+-- 兩張表的權限會互相參照（看得到行程 ⇔ 是成員），直接寫在 policy 裡會無限遞迴，
+-- 所以用 security definer 函式（以建立者身分執行、略過 RLS）來判斷。
+create or replace function is_trip_organizer(t uuid) returns boolean
+language sql security definer stable set search_path = public as $$
+  select exists (select 1 from trips where id = t and organizer_id = auth.uid());
+$$;
+
+create or replace function is_trip_participant(t uuid) returns boolean
+language sql security definer stable set search_path = public as $$
+  select is_trip_organizer(t)
+      or exists (select 1 from trip_members where trip_id = t and user_id = auth.uid());
+$$;
+
+-- 行程：只有發起人和被邀請的人看得到；只能用自己的身分發起；只有發起人能刪除
+-- （發起人直接比對 organizer_id：剛 insert 完馬上讀回來時，函式裡的查詢還看不到這筆新資料）
+drop policy if exists "trips select participant" on trips;
+create policy "trips select participant"
+  on trips for select
+  to authenticated
+  using (organizer_id = auth.uid() or is_trip_participant(id));
+
+drop policy if exists "trips insert own" on trips;
+create policy "trips insert own"
+  on trips for insert
+  to authenticated
+  with check (organizer_id = auth.uid());
+
+drop policy if exists "trips delete organizer" on trips;
+create policy "trips delete organizer"
+  on trips for delete
+  to authenticated
+  using (organizer_id = auth.uid());
+
+-- 成員：同一個行程的人互相看得到；只有發起人能邀請，而且只能邀請已經是好友的人；
+-- 被邀請的人只能改自己那一筆的狀態（加入／婉拒）
+drop policy if exists "trip_members select participant" on trip_members;
+create policy "trip_members select participant"
+  on trip_members for select
+  to authenticated
+  using (is_trip_participant(trip_id));
+
+drop policy if exists "trip_members insert by organizer" on trip_members;
+create policy "trip_members insert by organizer"
+  on trip_members for insert
+  to authenticated
+  with check (
+    is_trip_organizer(trip_id)
+    and exists (
+      select 1 from friendships f
+      where f.status = 'accepted'
+        and ((f.requester_id = auth.uid() and f.addressee_id = user_id)
+          or (f.addressee_id = auth.uid() and f.requester_id = user_id))
+    )
+  );
+
+drop policy if exists "trip_members update self" on trip_members;
+create policy "trip_members update self"
+  on trip_members for update
+  to authenticated
+  using (user_id = auth.uid())
+  with check (user_id = auth.uid());
+
+-- ============================================================
 -- Storage：trip-media bucket 的存取權限
 -- 先到 Dashboard → Storage → New bucket，建立一個名為 "trip-media" 的 Public bucket，
 -- 再回到 SQL Editor 執行下面兩個 policy

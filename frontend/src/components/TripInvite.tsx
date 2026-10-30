@@ -88,6 +88,10 @@ function TripInvite({ trip, onClose, onRespond }: TripInviteProps) {
 
   return (
     <section className="trip-invite">
+      {/* 依設計稿：照片鋪滿整張卡片當背景，往下淡出成 #F5F5F5，文字和按鈕都疊在上面 */}
+      {trip.placeImage && <img className="trip-invite-bg" src={trip.placeImage} alt="" />}
+      <div className="trip-invite-fade" />
+
       <div className="trip-invite-top">
         <button type="button" className="trip-invite-back" onClick={onClose} aria-label="返回">
           <svg width="21" height="24" viewBox="0 0 21 24" aria-hidden="true">
@@ -102,15 +106,14 @@ function TripInvite({ trip, onClose, onRespond }: TripInviteProps) {
         </div>
       </div>
 
-      <div className="trip-invite-media">
-        {trip.placeImage && <img src={trip.placeImage} alt={trip.placeTitle} />}
-        <div className="trip-invite-fade" />
+      {/* 留一段空間讓照片露出來，距離標籤放在這一段的右上 */}
+      <div className="trip-invite-hero">
         {distanceKm != null && <span className="trip-invite-distance">距離你{distanceKm.toFixed(1)}km</span>}
-        {/* 名稱和地址貼齊照片底部（疊在淡出的區域上），標籤固定在照片下方 */}
-        <div className="trip-invite-info">
-          <h2 className="trip-invite-title">{trip.placeTitle}</h2>
-          {trip.placeAddress && <p className="trip-invite-address">{trip.placeAddress}</p>}
-        </div>
+      </div>
+
+      <div className="trip-invite-info">
+        <h2 className="trip-invite-title">{trip.placeTitle}</h2>
+        {trip.placeAddress && <p className="trip-invite-address">{trip.placeAddress}</p>}
       </div>
 
       {trip.placeTags.length > 0 && (

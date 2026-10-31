@@ -2602,3 +2602,168 @@ body {
     display: none;
   }
 }
+
+/* =====================================================================
+   響應式設計（手機優先）
+   主要使用者是手機，這一段統一處理各尺寸裝置的顯示問題：
+   1. 動態視窗高度（dvh）：手機瀏覽器網址列收合時 100vh 會跳動
+   2. iPhone 瀏海／底部橫條的安全區域（safe-area-inset）
+   3. 輸入框文字至少 16px：iOS Safari 小於 16px 會在點輸入框時自動放大整個畫面
+   4. 長文字（暱稱、地址、景點名）在窄螢幕不撐破版面
+   5. 平板／電腦上內容維持手機寬度置中，各頁寬度一致
+   ===================================================================== */
+
+html {
+  /* 避免 iOS 橫向時自動放大文字 */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  /* 任何元素不小心超出螢幕寬度時，不讓整頁可以左右滑 */
+  overflow-x: clip;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root,
+.login-screen,
+.setup-screen {
+  min-height: 100dvh;
+}
+
+/* iPhone 瀏海與底部橫條：內容避開安全區域（需要 index.html 的 viewport-fit=cover） */
+.app-shell {
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+  padding-bottom: calc(150px + env(safe-area-inset-bottom));
+}
+
+.bottom-nav {
+  bottom: calc(20px + env(safe-area-inset-bottom));
+}
+
+.new-post-fab-wrap {
+  right: max(20px, env(safe-area-inset-right));
+  bottom: calc(90px + env(safe-area-inset-bottom));
+}
+
+.modal-panel {
+  max-height: 88dvh;
+  padding-bottom: calc(18px + env(safe-area-inset-bottom));
+}
+
+/* 輸入框文字 16px：防止 iOS 點輸入框時畫面被放大 */
+.login-field input,
+.setup-field input,
+.setup-field select,
+.friend-add-input,
+.new-post-input,
+.new-post-textarea {
+  font-size: 16px;
+}
+
+/* 平板、電腦：內容維持手機寬度置中，跟首頁貼文欄同樣的閱讀寬度 */
+.app-main {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* 首頁貼文的作者列：名字、地點各自一行省略，不擠成兩行 */
+.feed-post-user {
+  min-width: 0;
+}
+
+.feed-post-user .feed-post-avatar {
+  flex-shrink: 0;
+}
+
+.feed-post-user strong {
+  /* 名字吃掉地點以外的剩餘寬度 */
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.feed-post-location {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 42%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 大標題隨螢幕寬度縮放，窄螢幕不在單字中間斷行 */
+.trip-invite-title {
+  font-size: clamp(24px, 8.5vw, 34px);
+  overflow-wrap: break-word;
+}
+
+.favorite-list-item-info strong {
+  font-size: clamp(24px, 8vw, 36px);
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+  }
+
+  .bottom-nav.is-compact {
+    bottom: calc(10px + env(safe-area-inset-bottom));
+  }
+
+  .new-post-fab-wrap.is-compact {
+    bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+}
+
+/* 小手機（例如 iPhone SE、寬 360px 以下的 Android） */
+@media (max-width: 360px) {
+  .trip-invite-info {
+    padding: 0 20px;
+  }
+
+  .trip-invite-tags,
+  .trip-invite-rules,
+  .trip-invite-stops {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+
+  .trip-invite-tags {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .trip-invite-organizer {
+    margin-left: 16px;
+    font-size: 14px;
+  }
+
+  .trip-invite-tag {
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+
+  .login-screen {
+    padding: 32px 20px;
+  }
+
+  .bottom-nav {
+    gap: 24px;
+  }
+}
+
+/* 矮螢幕（橫向、或小手機）：行程邀請照片區縮短，讓按鈕留在畫面內 */
+@media (max-height: 640px) {
+  .trip-invite-hero {
+    height: 120px;
+  }
+}

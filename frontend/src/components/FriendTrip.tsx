@@ -8,7 +8,7 @@ function FriendTrip() {
   const { userId, friendCode } = useProfile();
   const { friends, incoming, outgoing, loading, sendRequest, respondToRequest, cancelRequest, removeFriend } =
     useFriends(userId);
-  const { trips, respond } = useTrips(userId);
+  const { trips, respond, addStop } = useTrips(userId);
   const [openTripId, setOpenTripId] = useState<string | null>(null);
 
   const [codeInput, setCodeInput] = useState('');
@@ -42,11 +42,18 @@ function FriendTrip() {
 
   const invites = trips.filter((t) => t.myRole === 'invited');
   const myTrips = trips.filter((t) => t.myRole === 'organizer' || t.myRole === 'joined');
+  // 別人發起、自己還沒參與的公開行程
+  const publicTrips = trips.filter((t) => t.myRole === 'viewer');
   const openTrip = trips.find((t) => t.id === openTripId);
 
   if (openTrip) {
     return (
-      <TripInvite trip={openTrip} onClose={() => setOpenTripId(null)} onRespond={(join) => respond(openTrip.id, join)} />
+      <TripInvite
+        trip={openTrip}
+        onClose={() => setOpenTripId(null)}
+        onRespond={(join) => respond(openTrip, join)}
+        onAddStop={(place) => addStop(openTrip, place)}
+      />
     );
   }
 
@@ -94,6 +101,14 @@ function FriendTrip() {
         {myTrips.length > 0 && (
           <FriendSection title={`我的行程（${myTrips.length}）`}>
             {myTrips.map((trip) => (
+              <TripRow key={trip.id} trip={trip} onOpen={() => setOpenTripId(trip.id)} />
+            ))}
+          </FriendSection>
+        )}
+
+        {publicTrips.length > 0 && (
+          <FriendSection title={`公開行程（${publicTrips.length}）`}>
+            {publicTrips.map((trip) => (
               <TripRow key={trip.id} trip={trip} onOpen={() => setOpenTripId(trip.id)} />
             ))}
           </FriendSection>
@@ -154,13 +169,15 @@ function FriendTrip() {
 /** 行程列表的一列：景點小圖＋名稱＋發起人，點了打開行程邀請畫面 */
 function TripRow({ trip, onOpen }: { trip: Trip; onOpen: () => void }) {
   const joined = trip.members.filter((m) => m.status === 'joined').length;
+  const stops = 1 + trip.stops.length;
   return (
     <button type="button" className="friend-row trip-row" onClick={onOpen}>
       {trip.placeImage ? <img className="trip-row-thumb" src={trip.placeImage} alt="" /> : <span className="trip-row-thumb" />}
       <span className="trip-row-text">
         <strong>{trip.placeTitle}</strong>
         <span>
-          {trip.myRole === 'organizer' ? '你發起的' : `由 ${trip.organizer.nickname} 發起`}・{joined + 1} 人參加
+          {trip.visibility === 'public' ? '🌏' : '🔒'} {trip.myRole === 'organizer' ? '你發起的' : `由 ${trip.organizer.nickname} 發起`}・
+          {joined + 1}/{trip.maxMembers} 人・{stops} 個景點
         </span>
       </span>
       <span className="trip-row-arrow" aria-hidden="true">

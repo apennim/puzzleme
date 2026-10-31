@@ -1,14 +1,70 @@
 import { useEffect, useState } from 'react';
 // @ts-ignore
 import * as turf from '@turf/turf';
+import { useFavorites, type FavoriteCard } from '../hooks/useFavorites';
 import { useProfile } from '../hooks/useProfile';
-import type { Trip, TripPerson } from '../hooks/useTrips';
+import { canAddStop, seatsTaken, stopCount, type Trip, type TripPerson } from '../hooks/useTrips';
 
 interface TripInviteProps {
   trip: Trip;
   onClose: () => void;
   /** 被邀請的人按 Join!（true）或 ✕（false），成功回傳 true */
   onRespond: (join: boolean) => Promise<boolean>;
+  /** 從自己的收藏加一個景點到下一站，成功回傳 true */
+  onAddStop: (place: FavoriteCard) => Promise<boolean>;
+}
+
+/** 從自己的收藏挑下一個景點；已經在行程裡的景點不列出來 */
+function StopPicker({
+  trip,
+  onPick,
+  onClose,
+}: {
+  trip: Trip;
+  onPick: (place: FavoriteCard) => Promise<boolean>;
+  onClose: () => void;
+}) {
+  const { favorites } = useFavorites();
+  const [saving, setSaving] = useState(false);
+  const inTrip = new Set([trip.placeTitle, ...trip.stops.map((s) => s.title)]);
+  const options = favorites.filter((f) => !inTrip.has(f.title));
+
+  const pick = async (place: FavoriteCard) => {
+    setSaving(true);
+    try {
+      if (await onPick(place)) onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-panel new-post-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>新增下一個景點</h3>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="關閉">
+            ✕
+          </button>
+        </div>
+        {options.length === 0 ? (
+          <p className="friend-trip-empty">收藏裡沒有其他景點了，先到「滑卡」右滑收藏幾個吧！</p>
+        ) : (
+          <div className="trip-stop-picker">
+            {options.map((place) => (
+              <button type="button" key={place.id} className="trip-stop-option" onClick={() => pick(place)} disabled={saving}>
+                {place.image ? <img src={place.image} alt="" /> : <span className="trip-stop-thumb" />}
+                <span>
+                  <strong>{place.title}</strong>
+                  {place.address && <small>{place.address}</small>}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 /** 右上角最多顯示幾個頭像，超過的人數用「+N」表示 */
@@ -58,8 +114,9 @@ function useDistanceKm(lat: number | null, lng: number | null): number | null {
  * 好友行程邀請畫面（依 Figma 設計稿）：上方景點照片往下淡出，
  * 疊上景點名稱、地址、標籤、「由 OOO 發起的行程」，下方 Join! 和紅色 ✕ 按鈕。
  */
-function TripInvite({ trip, onClose, onRespond }: TripInviteProps) {
+function TripInvite({ trip, onClose, onRespond, onAddStop }: TripInviteProps) {
   const [busy, setBusy] = useState(false);
+  const [picking, setPicking] = useState(false);
   const { userId } = useProfile();
   const distanceKm = useDistanceKm(trip.placeLat, trip.placeLng);
 
@@ -75,6 +132,9 @@ function TripInvite({ trip, onClose, onRespond }: TripInviteProps) {
   const shown = avatarPeople.slice(0, MAX_AVATARS);
   const moreCount = avatarPeople.length - shown.length;
   const waitingCount = trip.members.filter((m) => m.status === 'invited').length;
+  const seats = seatsTaken(trip);
+  // 公開行程的路人、或婉拒後想再加入的人，需要有空的名額；被邀請的人已經有保留名額
+  const isFull = trip.myRole !== 'invited' && seats >= trip.maxMembers;
 
   const handleRespond = async (join: boolean) => {
     setBusy(true);
@@ -134,6 +194,50 @@ function TripInvite({ trip, onClose, onRespond }: TripInviteProps) {
         )}
       </div>
 
+      {/* 發起人設定的行程規則 */}
+      <div className="trip-invite-rules">
+        <span>{trip.visibility === 'public' ? '🌏 公開行程' : '🔒 僅限好友'}</span>
+        <span>
+          👥 {seats}/{trip.maxMembers} 人
+        </span>
+        <span>
+          📍 {stopCount(trip)}/{trip.maxStops} 個景點
+        </span>
+        {trip.allowMemberStops && trip.maxStops > 1 && <span>✏️ 成員可加景點</span>}
+      </div>
+
+      {trip.maxStops > 1 && (
+        <div className="trip-invite-stops">
+          <p className="trip-invite-stops-title">行程景點</p>
+          <ol>
+            <li>
+              <span className="trip-stop-index">1</span>
+              <span className="trip-stop-text">
+                <strong>{trip.placeTitle}</strong>
+                <small>起點・{trip.organizer.nickname}</small>
+              </span>
+            </li>
+            {trip.stops.map((stop, i) => (
+              <li key={stop.id}>
+                <span className="trip-stop-index">{i + 2}</span>
+                <span className="trip-stop-text">
+                  <strong>{stop.title}</strong>
+                  <small>由 {stop.addedBy.nickname} 新增</small>
+                </span>
+              </li>
+            ))}
+          </ol>
+          {canAddStop(trip) && (
+            <button type="button" className="trip-invite-add-stop" onClick={() => setPicking(true)}>
+              ＋ 新增下一個景點
+            </button>
+          )}
+          {trip.myRole === 'joined' && !trip.allowMemberStops && (
+            <p className="trip-invite-stops-note">發起人沒有開放成員新增景點</p>
+          )}
+        </div>
+      )}
+
       <div className="trip-invite-actions">
         {trip.myRole === 'organizer' ? (
           <p className="trip-invite-status">
@@ -141,18 +245,20 @@ function TripInvite({ trip, onClose, onRespond }: TripInviteProps) {
           </p>
         ) : trip.myRole === 'joined' ? (
           <p className="trip-invite-status">🎉 你已加入這個行程！</p>
+        ) : isFull ? (
+          <p className="trip-invite-status">這個行程人數已滿</p>
         ) : (
           <>
             <button type="button" className="trip-invite-join" onClick={() => handleRespond(true)} disabled={busy}>
               Join!
             </button>
-            {trip.myRole === 'invited' && (
+            {(trip.myRole === 'invited' || trip.myRole === 'viewer') && (
               <button
                 type="button"
                 className="trip-invite-decline"
-                onClick={() => handleRespond(false)}
+                onClick={() => (trip.myRole === 'viewer' ? onClose() : handleRespond(false))}
                 disabled={busy}
-                aria-label="婉拒邀請"
+                aria-label={trip.myRole === 'viewer' ? '不加入' : '婉拒邀請'}
               >
                 ✕
               </button>
@@ -160,6 +266,8 @@ function TripInvite({ trip, onClose, onRespond }: TripInviteProps) {
           </>
         )}
       </div>
+
+      {picking && <StopPicker trip={trip} onPick={onAddStop} onClose={() => setPicking(false)} />}
     </section>
   );
 }

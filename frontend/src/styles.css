@@ -1587,6 +1587,267 @@ body {
   text-align: center;
 }
 
+/* 行程規則標籤（公開範圍、人數、景點數） */
+.trip-invite-rules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 22px 0;
+}
+
+.trip-invite-rules span {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #315a66;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* 行程景點列表 */
+.trip-invite-stops {
+  margin: 16px 22px 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.trip-invite-stops-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #315a66;
+}
+
+.trip-invite-stops ol {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trip-invite-stops li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.trip-stop-index {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #315a66;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.trip-stop-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.trip-stop-text strong {
+  overflow: hidden;
+  font-size: 14px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.trip-stop-text small {
+  color: #8a7a74;
+  font-size: 11px;
+}
+
+.trip-invite-add-stop {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+  border: 1.5px dashed #315a66;
+  border-radius: 12px;
+  background: transparent;
+  color: #315a66;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.trip-invite-stops-note {
+  margin: 8px 0 0;
+  color: #8a7a74;
+  font-size: 12px;
+}
+
+/* 新增景點：從收藏挑 */
+.trip-stop-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trip-stop-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border: none;
+  border-radius: 14px;
+  background: #f9f6f5;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.trip-stop-option img,
+.trip-stop-thumb {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #e8dcd8;
+}
+
+.trip-stop-option span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.trip-stop-option strong {
+  color: #424242;
+  font-size: 0.95rem;
+}
+
+.trip-stop-option small {
+  overflow: hidden;
+  color: #8a7a74;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 發起行程視窗：行程設定 */
+.trip-visibility {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.trip-visibility-option {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1.5px solid rgba(49, 90, 102, 0.25);
+  border-radius: 14px;
+  background: #fff;
+  color: #315a66;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.trip-visibility-option strong {
+  font-size: 0.9rem;
+}
+
+.trip-visibility-option span {
+  color: #8a7a74;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.trip-visibility-option.active {
+  border-color: #315a66;
+  background: #eef4f5;
+}
+
+.trip-settings-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f9f6f5;
+}
+
+.trip-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #315a66;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.trip-setting-toggle {
+  cursor: pointer;
+}
+
+.trip-setting-toggle span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.trip-setting-toggle small {
+  color: #8a7a74;
+  font-size: 0.72rem;
+  font-weight: 400;
+}
+
+.trip-setting-toggle input {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  accent-color: #315a66;
+}
+
+.trip-stepper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.trip-stepper button {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: #315a66;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.trip-stepper button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.trip-stepper span {
+  min-width: 22px;
+  color: #424242;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.friend-chip:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 /* 好友分頁的行程列表 */
 .trip-row {
   width: 100%;

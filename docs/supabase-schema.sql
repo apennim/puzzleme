@@ -271,6 +271,152 @@ create policy "trip_members update self"
   with check (user_id = auth.uid());
 
 -- ============================================================
+-- 行程設定（發起人在送出邀請時決定）
+--   visibility        ：'friends' 僅限受邀的好友看得到；'public' 所有用戶都看得到、可以直接加入
+--   max_members       ：人數上限（含發起人）
+--   max_stops         ：景點數上限（含發起時的第一個景點）
+--   allow_member_stops：已加入的人可不可以新增下一個景點
+-- ============================================================
+alter table trips add column if not exists visibility text not null default 'friends';
+alter table trips add column if not exists max_members int not null default 4;
+alter table trips add column if not exists max_stops int not null default 3;
+alter table trips add column if not exists allow_member_stops boolean not null default false;
+
+alter table trips drop constraint if exists trips_visibility_check;
+alter table trips add constraint trips_visibility_check check (visibility in ('friends', 'public'));
+alter table trips drop constraint if exists trips_limits_check;
+alter table trips add constraint trips_limits_check check (max_members between 2 and 20 and max_stops between 1 and 20);
+
+-- 行程的第 2 個以後的景點（第 1 個是 trips 上的 place_*）
+create table if not exists trip_stops (
+  id uuid primary key default gen_random_uuid(),
+  trip_id uuid not null references trips(id) on delete cascade,
+  added_by uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  place_title text not null,
+  place_address text,
+  place_image text,
+  place_tags text[] not null default '{}',
+  place_lat double precision,
+  place_lng double precision,
+  created_at timestamptz not null default now()
+);
+
+alter table trip_stops enable row level security;
+
+create or replace function is_trip_public(t uuid) returns boolean
+language sql security definer stable set search_path = public as $$
+  select exists (select 1 from trips where id = t and visibility = 'public');
+$$;
+
+-- 誰可以新增景點：發起人；或「已加入」的成員且發起人有開放
+create or replace function can_add_trip_stop(t uuid) returns boolean
+language sql security definer stable set search_path = public as $$
+  select is_trip_organizer(t)
+      or exists (
+        select 1 from trips tr
+        join trip_members m on m.trip_id = tr.id
+        where tr.id = t and tr.allow_member_stops and m.user_id = auth.uid() and m.status = 'joined'
+      );
+$$;
+
+-- 公開行程：所有登入的用戶都看得到行程和成員
+drop policy if exists "trips select participant" on trips;
+create policy "trips select participant"
+  on trips for select
+  to authenticated
+  using (organizer_id = auth.uid() or visibility = 'public' or is_trip_participant(id));
+
+drop policy if exists "trip_members select participant" on trip_members;
+create policy "trip_members select participant"
+  on trip_members for select
+  to authenticated
+  using (is_trip_participant(trip_id) or is_trip_public(trip_id));
+
+-- 加入成員的兩種方式：發起人邀請好友（invited），或自己加入公開行程（joined）
+drop policy if exists "trip_members insert by organizer" on trip_members;
+create policy "trip_members insert by organizer"
+  on trip_members for insert
+  to authenticated
+  with check (
+    (
+      is_trip_organizer(trip_id)
+      and status = 'invited'
+      and exists (
+        select 1 from friendships f
+        where f.status = 'accepted'
+          and ((f.requester_id = auth.uid() and f.addressee_id = user_id)
+            or (f.addressee_id = auth.uid() and f.requester_id = user_id))
+      )
+    )
+    or (user_id = auth.uid() and status = 'joined' and is_trip_public(trip_id))
+  );
+
+drop policy if exists "trip_stops select participant" on trip_stops;
+create policy "trip_stops select participant"
+  on trip_stops for select
+  to authenticated
+  using (is_trip_participant(trip_id) or is_trip_public(trip_id));
+
+drop policy if exists "trip_stops insert allowed" on trip_stops;
+create policy "trip_stops insert allowed"
+  on trip_stops for insert
+  to authenticated
+  with check (added_by = auth.uid() and can_add_trip_stop(trip_id));
+
+drop policy if exists "trip_stops delete own or organizer" on trip_stops;
+create policy "trip_stops delete own or organizer"
+  on trip_stops for delete
+  to authenticated
+  using (added_by = auth.uid() or is_trip_organizer(trip_id));
+
+-- 人數上限：邀請中＋已加入＋發起人 不能超過 max_members（婉拒的人會讓出名額）
+-- 用 trigger 在資料庫端擋，不管前端怎麼送都不會超過
+create or replace function enforce_trip_capacity() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare
+  cap int;
+  taken int;
+begin
+  if new.status = 'declined' then
+    return new;
+  end if;
+  select max_members into cap from trips where id = new.trip_id;
+  select count(*) into taken from trip_members
+    where trip_id = new.trip_id and status in ('invited', 'joined') and user_id <> new.user_id;
+  if taken + 2 > cap then  -- +1 自己、+1 發起人
+    raise exception 'trip_full';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trip_members_capacity on trip_members;
+create trigger trip_members_capacity
+  before insert or update of status on trip_members
+  for each row execute function enforce_trip_capacity();
+
+-- 景點上限：trip_stops 的數量＋第 1 個景點 不能超過 max_stops
+create or replace function enforce_trip_stop_limit() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare
+  cap int;
+  taken int;
+begin
+  select max_stops into cap from trips where id = new.trip_id;
+  select count(*) into taken from trip_stops where trip_id = new.trip_id;
+  if taken + 2 > cap then  -- +1 這次新增的、+1 第一個景點
+    raise exception 'stops_full';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trip_stops_limit on trip_stops;
+create trigger trip_stops_limit
+  before insert on trip_stops
+  for each row execute function enforce_trip_stop_limit();
+
+-- ============================================================
 -- Storage：trip-media bucket 的存取權限
 -- 先到 Dashboard → Storage → New bucket，建立一個名為 "trip-media" 的 Public bucket，
 -- 再回到 SQL Editor 執行下面兩個 policy

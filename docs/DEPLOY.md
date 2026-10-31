@@ -145,6 +145,19 @@ npm --prefix frontend run dev
 
 程式碼在 [`frontend/src/components/TripInvite.tsx`](../frontend/src/components/TripInvite.tsx)、[`frontend/src/hooks/useTrips.ts`](../frontend/src/hooks/useTrips.ts)。
 
+## 12. 行程設定（公開範圍、人數上限、景點數上限、成員新增景點）
+
+發起行程時（收藏 → 景點 → 👥 邀請好友同行）可以設定：
+
+- **誰可以看到**：🔒 僅限好友（只有被邀請的好友看得到、能加入）或 🌏 公開（所有用戶在「好友」分頁的「公開行程」都看得到，可以直接 Join!）。公開行程可以不邀請任何好友。
+- **人數上限**（含發起人，2～10 人）：邀請中＋已加入＋發起人不能超過上限，婉拒的人會讓出名額。
+- **景點數上限**（含第一個景點，1～10 個）。
+- **讓受邀者新增下一個景點**：開啟後，已加入的人可以在行程畫面按「＋ 新增下一個景點」，從自己的收藏挑景點加進去。發起人一律可以新增。
+
+人數和景點上限在資料庫用 trigger 檢查，就算有人繞過前端也不會超過。
+
+你要做的：**再重新執行一次** [docs/supabase-schema.sql](supabase-schema.sql)（trips 加 4 個設定欄位、新增 `trip_stops` 表、更新權限與 trigger）。舊的行程會套用預設值：僅限好友、4 人、3 個景點、不開放成員新增景點。
+
 ## 已知限制
 
 - `trip_posts` 的新增權限對所有人開放（demo 階段的合理取捨），任何拿到 anon key 的人理論上都能塞資料進去。`profile_leads` 因為改走伺服器端 API，前端不再直接握有寫入權限，相對安全一些，但 `/api/account` 本身仍是公開端點，沒有做防灌水驗證。若之後要防灌水，可以加簡單的 rate limit 或驗證碼。

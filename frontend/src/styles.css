@@ -1,6 +1,6 @@
 :root {
   color-scheme: light;
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: #f4ebe8;
   color: #1f1f1f;
 }
@@ -13,6 +13,14 @@ body {
   margin: 0;
   min-height: 100vh;
   background: #f4ebe8;
+}
+
+/* 按鈕、輸入框預設不會繼承頁面字型，統一繼承，中英文字型才會一致 */
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
 }
 
 #root {
@@ -294,7 +302,7 @@ body {
 
 .card-title {
   margin: 0;
-  font-family: Inter, sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', sans-serif;
   font-size: 1.5rem;
   font-weight: 700;
   color: #424242;
@@ -308,7 +316,7 @@ body {
 
 .card-address {
   margin: 0;
-  font-family: Inter, sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', sans-serif;
   font-size: 0.85rem;
   color: #424242;
   line-height: 1.4;
@@ -330,7 +338,7 @@ body {
 .tag-pill {
   padding: 10px 14px;
   border-radius: 40px;
-  font-family: Inter, sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', sans-serif;
   font-size: 0.8rem;
   font-weight: 600;
   color: #424242;
@@ -502,7 +510,7 @@ body {
 
 .home-feed-prompt {
   margin: 0;
-  font-family: Inter, sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', sans-serif;
   font-style: italic;
   font-weight: 700;
   font-size: 0.9rem;
@@ -585,7 +593,7 @@ body {
 
 .feed-post-caption-text {
   color: #f5f5f5;
-  font-family: Inter, sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', sans-serif;
   font-size: 11px;
   font-style: italic;
   font-weight: 700;
@@ -1033,7 +1041,7 @@ body {
 }
 
 .new-post-author-name {
-  font-family: Inter, sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', sans-serif;
   font-size: 0.95rem;
   font-weight: 600;
   color: #424242;
@@ -1045,7 +1053,7 @@ body {
   border: 1px solid rgba(49, 90, 102, 0.2);
   border-radius: 12px;
   padding: 10px 12px;
-  font-family: Inter, sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', sans-serif;
   font-size: 0.9rem;
   color: #424242;
   background: #f9f6f5;
@@ -1243,7 +1251,7 @@ body {
 }
 
 .profile-name {
-  font-family: Inter, sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', sans-serif;
   font-weight: 700;
   font-size: 1.1rem;
   color: #424242;
@@ -1270,7 +1278,7 @@ body {
   padding: 6px 14px;
   background: #f5f5f5;
   color: #424242;
-  font-family: Inter, sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', sans-serif;
   font-size: 0.8rem;
   cursor: pointer;
 }
@@ -1314,7 +1322,7 @@ body {
   padding: 8px 12px;
   background: none;
   color: #424242;
-  font-family: Inter, sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', sans-serif;
   font-size: 0.85rem;
   text-align: left;
   cursor: pointer;
@@ -1360,7 +1368,7 @@ body {
   background: #f5f5f5;
   box-shadow: 0 4px 28.6px rgba(133, 132, 176, 0.5);
   overflow: hidden;
-  font-family: Inter, sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', sans-serif;
   color: #424242;
 }
 
@@ -1984,7 +1992,7 @@ body {
 .favorite-list-item-info strong {
   display: block;
   color: #424242;
-  font-family: Inter, sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', sans-serif;
   font-size: 36px;
   font-weight: 700;
   line-height: 1.1;
@@ -1994,7 +2002,7 @@ body {
 .favorite-list-item-info p {
   margin: 0;
   color: #424242;
-  font-family: Inter, sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', sans-serif;
   font-size: 16px;
   font-weight: 600;
   line-height: 1.3;
@@ -2041,7 +2049,7 @@ body {
 
 .favorite-detail-saved-text {
   color: #fff;
-  font-family: Inter, sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', sans-serif;
   font-size: 0.8rem;
   font-weight: 600;
 }
@@ -2113,7 +2121,7 @@ body {
   border: none;
   border-radius: 12px;
   padding: 14px 16px;
-  font-family: Inter, sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', sans-serif;
   font-size: 0.95rem;
   color: #424242;
   background: #f5f5f5;
@@ -2151,7 +2159,7 @@ body {
   padding: 14px;
   background: #f5f5f5;
   color: #424242;
-  font-family: Inter, sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', sans-serif;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -2406,7 +2414,7 @@ body {
 .setup-field label {
   padding-left: 11px;
   color: rgba(0, 0, 0, 0.6);
-  font-family: Inter, sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', sans-serif;
   font-size: 16px;
   font-weight: 600;
 }
@@ -2420,7 +2428,7 @@ body {
   padding: 0 18px;
   background: #f5f5f5;
   color: #424242;
-  font-family: Inter, sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', sans-serif;
   font-size: 0.95rem;
 }
 
@@ -2541,7 +2549,7 @@ body {
   padding: 20px;
   text-align: center;
   color: #fff;
-  font-family: Inter, sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', sans-serif;
   font-size: 0.95rem;
   font-weight: 600;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
@@ -2557,7 +2565,7 @@ body {
   border-radius: 999px;
   background: #ec9c9c;
   color: #fff;
-  font-family: Inter, sans-serif;
+  font-family: Inter, 'PuzzleMe Sans TC', sans-serif;
   font-size: 0.75rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;

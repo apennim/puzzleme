@@ -52,6 +52,7 @@ Instagram: im24601____
 - **動畫**：Framer Motion
 - **後端與資料庫**：Supabase（PostgreSQL、Auth、Storage、Row Level Security）
 - **部署**：Vercel（前端與 Serverless Function）
+- **字型**：英文 Inter、手寫風 Caveat（Google Fonts）；中文 PuzzleMe Sans TC，由 LY Corporation 的 [LINE Seed TW](https://seed.line.me/index_tw.html) 分片轉成網頁字型，依 SIL Open Font License 1.1 授權（授權全文見 `frontend/public/fonts/puzzleme-sans-tc/OFL.txt`）
 
 部署與資料庫設定步驟見 [docs/DEPLOY.md](docs/DEPLOY.md)，本機開發見 [frontend/README.md](frontend/README.md)。
 

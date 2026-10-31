@@ -58,6 +58,7 @@
 | 2026-03-01 | project | 專題主題: AI 驅動的校園導航系統 | high | README.md | - | Active | - | - |
 | 2026-03-01 | lang | 程式語言: Python + React (前後端分離) | high | src/ | - | Active | - | - |
 | 2026-10-13 | auth | 登入改為 Gmail/電話+密碼（/api/account 以 secret key 建帳號），個人資料頁改存 profiles 表＋Storage，重新登入資料保留 | high | [VERIFIED] tsc | - | Active | - | - |
+| 2026-10-31 | design | 中文字型改用 LINE Seed TW（OFL 1.1，保留名稱需改名）→ 自架分片 WOFF2「PuzzleMe Sans TC」（scripts/build_chinese_webfont.py 產生），英文維持 Inter | high | [VERIFIED] seed.line.me 授權頁＋license.txt＋vite build | - | Active | - | - |
 | 2026-10-31 | db | 行程設定 visibility／max_members／max_stops／allow_member_stops 存在 trips；新增 trip_stops；人數與景點上限用 security definer trigger 在資料庫端強制 | medium | [VERIFIED] tsc＋本機畫面 | - | Active | - | - |
 | 2026-10-30 | db | 好友行程邀請：新增 trips／trip_members 表，RLS 互相參照改用 security definer 函式（is_trip_organizer／is_trip_participant）避免遞迴；只能邀請 accepted 好友 | medium | [VERIFIED] tsc＋本機畫面 | - | Active | - | - |
 

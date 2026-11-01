@@ -2775,3 +2775,75 @@ body {
     height: 120px;
   }
 }
+
+/* 手機上的行程邀請畫面：頭像到 Join! 要在一個畫面內看完，不用往下滑（一般手機高度約 844px） */
+@media (max-width: 720px) {
+  /* 照片區縮矮（照片仍是整張卡片的背景，只是露出的空間變少） */
+  .trip-invite-hero {
+    height: clamp(110px, 18dvh, 280px);
+  }
+
+  .trip-invite-tags {
+    padding-top: 14px;
+  }
+
+  .trip-invite-rules {
+    margin-top: 10px;
+  }
+
+  /* 景點列表改成一列精簡標籤：① 霞海城隍廟　② 大稻埕碼頭夕陽 */
+  .trip-invite-stops {
+    margin-top: 12px;
+    padding: 10px 12px;
+  }
+
+  .trip-invite-stops-title {
+    margin-bottom: 6px;
+  }
+
+  .trip-invite-stops ol {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .trip-invite-stops li {
+    gap: 6px;
+    max-width: 100%;
+    padding: 4px 10px 4px 4px;
+    border-radius: 999px;
+    background: #f5f5f5;
+  }
+
+  .trip-stop-index {
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+  }
+
+  .trip-stop-text strong {
+    font-size: 13px;
+  }
+
+  /* 「由 OOO 新增」在手機上省略，電腦版才顯示 */
+  .trip-stop-text small {
+    display: none;
+  }
+
+  .trip-invite-add-stop {
+    margin-top: 8px;
+    padding: 6px;
+    font-size: 13px;
+  }
+
+  .trip-invite-actions {
+    margin-top: 18px;
+  }
+}
+
+/* 矮一點的手機（高度 760px 以下）照片區再縮小，Join! 才放得進第一個畫面 */
+@media (max-width: 720px) and (max-height: 760px) {
+  .trip-invite-hero {
+    height: 80px;
+  }
+}

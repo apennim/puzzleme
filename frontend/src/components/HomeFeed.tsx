@@ -1,6 +1,7 @@
 import { useProfile } from '../hooks/useProfile';
 import type { UserPost } from '../hooks/usePosts';
 import EditableImage from './EditableImage';
+import { isRecapWindow } from '../lib/monthlyRecap';
 
 const CAPTION_PREVIEW_LIMIT = 15;
 
@@ -53,9 +54,11 @@ interface HomeFeedProps {
   posts: UserPost[];
   onOpenFavorites?: () => void;
   onOpenPost?: (id: string) => void;
+  /** 每月 27 日～月底首頁會出現「本月路線拼圖」橫幅，點了打開拼圖頁 */
+  onOpenPuzzle?: () => void;
 }
 
-function HomeFeed({ posts: dynamicPosts, onOpenFavorites, onOpenPost }: HomeFeedProps) {
+function HomeFeed({ posts: dynamicPosts, onOpenFavorites, onOpenPost, onOpenPuzzle }: HomeFeedProps) {
   const { avatarUrl: myAvatar, setAvatar: setMyAvatar } = useProfile();
 
   return (
@@ -65,6 +68,21 @@ function HomeFeed({ posts: dynamicPosts, onOpenFavorites, onOpenPost }: HomeFeed
         <p className="home-feed-prompt">Where you wanna go today?</p>
         <button className="home-feed-search" aria-label="收藏盒" onClick={onOpenFavorites}>🔖</button>
       </div>
+
+      {onOpenPuzzle && isRecapWindow() && (
+        <button type="button" className="puzzle-banner" onClick={onOpenPuzzle}>
+          <span className="puzzle-banner-icon" aria-hidden="true">
+            🧩
+          </span>
+          <span className="puzzle-banner-text">
+            <strong>{new Date().getMonth() + 1} 月路線拼圖完成了！</strong>
+            <span>看看這個月和誰一起去了哪些地方</span>
+          </span>
+          <span className="puzzle-banner-arrow" aria-hidden="true">
+            ›
+          </span>
+        </button>
+      )}
 
       <div className="home-feed-list">
         {dynamicPosts.length === 0 && (

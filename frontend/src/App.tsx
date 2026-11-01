@@ -19,6 +19,7 @@ import FavoritesBox from './components/FavoritesBox';
 import FavoriteDetail from './components/FavoriteDetail';
 import Login from './components/Login';
 import PostDetail from './components/PostDetail';
+import MonthlyPuzzle from './components/MonthlyPuzzle';
 import ProfileSetup from './components/ProfileSetup';
 
 const secondaryTabs = ['Map'] as const;
@@ -35,6 +36,7 @@ function App() {
   const [postDetailId, setPostDetailId] = useState<string | null>(null);
   /** 從個人主頁點進貼文時為 true，按返回會回到個人主頁而不是首頁 */
   const [postFromProfile, setPostFromProfile] = useState(false);
+  const [showPuzzle, setShowPuzzle] = useState(false);
   const { posts, addPost, updatePost, deletePost } = usePosts();
   const compactBars = useCompactWhenIdle();
   const { favorites, addFavorite } = useFavorites();
@@ -124,10 +126,14 @@ function App() {
             />
           );
         })()}
-        {!showProfile && activeTab === 'Home' && !postDetailId && (
+        {!showProfile && activeTab === 'Home' && !postDetailId && showPuzzle && (
+          <MonthlyPuzzle onClose={() => setShowPuzzle(false)} />
+        )}
+        {!showProfile && activeTab === 'Home' && !postDetailId && !showPuzzle && (
           <HomeFeed
             posts={posts}
             onOpenFavorites={() => setActiveTab('Favorites')}
+            onOpenPuzzle={() => setShowPuzzle(true)}
             onOpenPost={(id) => {
               setPostDetailId(id);
               setPostFromProfile(false);
@@ -211,6 +217,7 @@ function App() {
           setFavoriteDetailId(null);
           setPostDetailId(null);
           setPostFromProfile(false);
+          setShowPuzzle(false);
         }}
       />
     </div>

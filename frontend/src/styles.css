@@ -2847,3 +2847,231 @@ body {
     height: 80px;
   }
 }
+
+/* ===== 每月路線拼圖 ===== */
+/* 首頁橫幅：每月 27 日～月底出現 */
+.puzzle-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: calc(100% - 36px);
+  max-width: 444px;
+  margin: 0 auto 16px;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 18px;
+  background: linear-gradient(120deg, #ddecc0, #f6efc2 55%, #e1c6b9);
+  box-shadow: 0 6px 16px rgba(133, 132, 176, 0.25);
+  color: #315a66;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.puzzle-banner-icon {
+  font-size: 1.8rem;
+}
+
+.puzzle-banner-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.8rem;
+}
+
+.puzzle-banner-text strong {
+  font-size: 1rem;
+}
+
+.puzzle-banner-arrow {
+  font-size: 1.5rem;
+}
+
+/* 拼圖頁 */
+.monthly-puzzle {
+  padding-bottom: 24px;
+}
+
+.monthly-puzzle-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 18px 4px;
+}
+
+.monthly-puzzle-header .back-btn {
+  position: static;
+  flex-shrink: 0;
+}
+
+.monthly-puzzle-header h2 {
+  margin: 0;
+  color: #315a66;
+  font-size: 1.3rem;
+}
+
+.monthly-puzzle-header p {
+  margin: 2px 0 0;
+  color: #8a7a74;
+  font-size: 0.8rem;
+}
+
+.monthly-puzzle-board {
+  max-width: 420px;
+  margin: 8px auto 0;
+  padding: 0 10px;
+}
+
+.puzzle-board {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 6px 10px rgba(133, 132, 176, 0.35));
+}
+
+.puzzle-piece {
+  cursor: pointer;
+}
+
+.puzzle-piece-outline {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.puzzle-piece-outline.is-selected {
+  stroke: #df5b5b;
+  stroke-width: 4;
+}
+
+.puzzle-piece-badge {
+  fill: #315a66;
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+
+.puzzle-piece-number {
+  fill: #ffffff;
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.monthly-puzzle-caption {
+  min-height: 1.4em;
+  margin: 10px 18px 0;
+  color: #8a7a74;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.monthly-puzzle-caption strong {
+  color: #315a66;
+}
+
+.monthly-puzzle-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 16px 18px 0;
+}
+
+.monthly-puzzle-stats div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 4px;
+  border-radius: 14px;
+  background: #f9f6f5;
+}
+
+.monthly-puzzle-stats strong {
+  color: #315a66;
+  font-size: 1.4rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.monthly-puzzle-stats span {
+  color: #8a7a74;
+  font-size: 0.75rem;
+}
+
+.route-map {
+  height: 220px;
+  margin: 16px 18px 0;
+  border-radius: 16px;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.route-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.route-marker span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: #df5b5b;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  color: #ffffff;
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.monthly-puzzle-friends {
+  margin: 18px 18px 0;
+}
+
+.monthly-puzzle-section-title {
+  margin: 0 0 8px;
+  color: #315a66;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.monthly-puzzle-friend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.05);
+  color: #424242;
+  font-weight: 600;
+}
+
+.monthly-puzzle-friend span {
+  flex: 1;
+}
+
+.monthly-puzzle-friend em {
+  color: #8a7a74;
+  font-size: 0.85rem;
+  font-style: normal;
+}
+
+.puzzle-avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.puzzle-avatar-initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e1c6b9;
+  color: #ffffff;
+  font-weight: 700;
+}
